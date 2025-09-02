@@ -1,0 +1,12 @@
+﻿# node
+node_modules/
+npm-debug.log*
+.yarn/*
+dist/
+build/
+.env
+.env.*
+.prisma/
+# OS
+.DS_Store
+Thumbs.db
