@@ -3,15 +3,17 @@
  * Provides reusable database operations for users.
  */
 import { User } from '../../types/user'
-import type { RequestInfo } from "../../types/request";
+import { RequestInfo, AcceptedRequestInfo } from "../../types/request";
 import logger from './logger'
 import { DbInterface, DbQueryResult } from '../../types/db'
 
 export interface CommonQueries {
   upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
   upsertRequest: (requestInfo: RequestInfo) => Promise<DbQueryResult<void>>;
-  getUserById: (userId: string) => Promise<DbQueryResult<void>>;
-  getRequesterById: (requesterId: string) => Promise<DbQueryResult<void>>;
+  getUserDetailsById: (userId: number) => Promise<DbQueryResult<User>>;
+  getRequestByRequesterId: (requesterId: number) => Promise<DbQueryResult<RequestInfo>>;
+  getRequestByRequestId: (requestId: number) => Promise<DbQueryResult<RequestInfo>>;
+  getRequestByHelperId: (helperId: number) => Promise<DbQueryResult<RequestInfo>>;
 }
 
 /**
@@ -92,7 +94,9 @@ const commonQueries = (db: DbInterface): CommonQueries => {
     upsertRequest: async (requestInfo: RequestInfo) => {
       try {
         const {
+          request_id,
           requester_id,
+          helper_id,
           request_title,
           request_type,
           request_description,
@@ -101,12 +105,15 @@ const commonQueries = (db: DbInterface): CommonQueries => {
           request_time,
           request_approx_duration,
           request_priority,
+          request_status,
           created_date,
           updated_date
         } = requestInfo;
         const query = `
           INSERT INTO kampung_kaki.t_requests (
+            request_id,
             requester_id, 
+            helper_id,
             request_title,
             request_type,
             request_description, 
@@ -115,14 +122,17 @@ const commonQueries = (db: DbInterface): CommonQueries => {
             request_time,
             request_approx_duration,
             request_priority,
+            request_status,
             created_date,
             updated_date 
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
           )
           ON CONFLICT (user_id)
           DO UPDATE SET
+            request_id              = EXCLUDED.request_id,
             requester_id            = EXCLUDED.requester_id,
+            helper_id               = EXCLUDED.helper_id,
             request_title           = EXCLUDED.request_title,
             request_type            = EXCLUDED.request_type,
             request_description     = EXCLUDED.request_description,
@@ -131,11 +141,14 @@ const commonQueries = (db: DbInterface): CommonQueries => {
             request_time            = EXCLUDED.request_time,
             request_approx_duration = EXCLUDED.request_approx_duration, 
             request_priority        = EXCLUDED.request_priority,
+            request_status          = EXCLUDED.request_status,
             created_date            = EXCLUDED.created_date,
             updated_date            = EXCLUDED.updated_date;
         `
         const params = [
+          request_id,
           requester_id,
+          helper_id ?? null,
           request_title,
           request_type,
           request_description,
@@ -144,6 +157,7 @@ const commonQueries = (db: DbInterface): CommonQueries => {
           request_time,
           request_approx_duration,
           request_priority,
+          request_status,
           created_date ?? null,
           updated_date ?? null
         ]
@@ -157,21 +171,32 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         return { success: false, error: error.message }
       }
     },
-    getUserById: async (userId: string) => {
+    getUserDetailsById: async (userId: number) => {
       try {
         const query = `
           SELECT *
           FROM kampung_kaki.t_users
           WHERE user_id = $1
-        `;
+        `
         const result = await db.query(query, [userId]);
-        return result.rows[0]; // single user
+        if (result.rows.length === 0) {
+          logger.debug(`No User found with ID ${userId}`)
+          return {
+            success: false,
+            error: 'User not found'
+          }
+        }
+        return { 
+          success: true, 
+          data: result.rows[0] as User
+        }; 
+        
       } catch (error) {
         console.error("Error fetching user:", error);
         throw error;
       }
     },
-    getRequesterById: async (requesterId: string) => {
+    getRequestByRequesterId: async (requesterId: number) => {
       try {
         const query = `
           SELECT *
@@ -179,9 +204,67 @@ const commonQueries = (db: DbInterface): CommonQueries => {
           WHERE requester_id = $1
         `;
         const result = await db.query(query, [requesterId]);
-        return result.rows[0]; // single requester
+        if (result.rows.length === 0) {
+          logger.debug(`No requests found made by User ${requesterId}`)
+          return {
+            success: false,
+            error: 'Request not found'
+          }
+        }
+        return { 
+          success: true, 
+          data: result.rows[0] as RequestInfo
+        }; 
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("Error fetching request:", error);
+        throw error;
+      }
+    },
+    getRequestByRequestId: async (requestId: number) => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_requests
+          WHERE requester_id = $1
+        `;
+        const result = await db.query(query, [requestId]);
+        if (result.rows.length === 0) {
+          logger.debug(`No requests found with Id ${requestId}`)
+          return {
+            success: false,
+            error: 'Request not found'
+          }
+        }
+        return { 
+          success: true, 
+          data: result.rows[0] as RequestInfo
+        }; 
+      } catch (error) {
+        console.error("Error fetching request:", error);
+        throw error;
+      }
+    },
+    getRequestByHelperId: async (helperId: number) => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_requests
+          WHERE requester_id = $1
+        `;
+        const result = await db.query(query, [helperId]);
+        if (result.rows.length === 0) {
+          logger.debug(`No requests found with Id ${helperId}`)
+          return {
+            success: false,
+            error: 'Request not found'
+          }
+        }
+        return { 
+          success: true, 
+          data: result.rows[0] as RequestInfo
+        }; 
+      } catch (error) {
+        console.error("Error fetching request:", error);
         throw error;
       }
     },
