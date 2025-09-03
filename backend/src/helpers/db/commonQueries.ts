@@ -9,21 +9,10 @@ import { DbInterface, DbQueryResult } from '../../types/db'
 
 export interface CommonQueries {
   upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
-}
-
-export interface CommonQueries {
   upsertRequest: (requestInfo: RequestInfo) => Promise<DbQueryResult<void>>;
-}
-
-export interface CommonQueries {
   getUserById: (userId: string) => Promise<DbQueryResult<void>>;
-}
-
-export interface CommonQueries {
   getRequesterById: (requesterId: string) => Promise<DbQueryResult<void>>;
 }
-
-
 
 /**
  * Creates common database query helpers
@@ -77,7 +66,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
             created_date = EXCLUDED.created_date,
             updated_date = EXCLUDED.updated_date;
         `
-
         const params = [
           user_id,
           user_name,
@@ -101,7 +89,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         return { success: false, error: error.message }
       }
     },
-
     upsertRequest: async (requestInfo: RequestInfo) => {
       try {
         const {
@@ -117,8 +104,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
           created_date,
           updated_date
         } = requestInfo;
-        
-
         const query = `
           INSERT INTO kampung_kaki.t_requests (
             requester_id, 
@@ -149,7 +134,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
             created_date            = EXCLUDED.created_date,
             updated_date            = EXCLUDED.updated_date;
         `
-
         const params = [
           requester_id,
           request_title,
@@ -173,7 +157,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         return { success: false, error: error.message }
       }
     },
- 
     getUserById: async (userId: string) => {
       try {
         const query = `
@@ -188,8 +171,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         throw error;
       }
     },
-
-
     getRequesterById: async (requesterId: string) => {
       try {
         const query = `
@@ -204,7 +185,6 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         throw error;
       }
     },
-    
   }
 }
 
