@@ -15,6 +15,15 @@ export interface CommonQueries {
   upsertRequest: (requestInfo: RequestInfo) => Promise<DbQueryResult<void>>;
 }
 
+export interface CommonQueries {
+  getUserById: (userId: string) => Promise<DbQueryResult<void>>;
+}
+
+export interface CommonQueries {
+  getRequesterById: (requesterId: string) => Promise<DbQueryResult<void>>;
+}
+
+
 
 /**
  * Creates common database query helpers
@@ -162,6 +171,37 @@ const commonQueries = (db: DbInterface): CommonQueries => {
       } catch (error: any) {
         logger.error(`Failed to upsert request ${requestInfo.requester_id}: ${error.message}`)
         return { success: false, error: error.message }
+      }
+    },
+ 
+    getUserById: async (userId: string) => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_users
+          WHERE user_id = $1
+        `;
+        const result = await db.query(query, [userId]);
+        return result.rows[0]; // single user
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        throw error;
+      }
+    },
+
+
+    getRequesterById: async (requesterId: string) => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_requests
+          WHERE requester_id = $1
+        `;
+        const result = await db.query(query, [requesterId]);
+        return result.rows[0]; // single requester
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        throw error;
       }
     },
     
