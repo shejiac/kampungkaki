@@ -1,12 +1,13 @@
 /**
  * Common database queries helper module.
- * Provides reusable database operations for Jira tickets and Confluence pages.
+ * Provides reusable database operations for users.
  */
-import logger from '../../logger'
-
+import { User } from '../../types/user'
+import logger from './logger'
+import { DbInterface, DbQueryResult } from '../../types/db'
 
 export interface CommonQueries {
-  upsertJiraTicket: (ticketData: JiraTicket) => Promise<DbQueryResult<void>>
+  upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
 }
 
 /**
@@ -16,85 +17,77 @@ export interface CommonQueries {
  */
 const commonQueries = (db: DbInterface): CommonQueries => {
   return {
-    upsertJiraTicket: async (ticketData: JiraTicket) => {
+    upsertUser: async (userInfo: User) => {
       try {
         const {
-          id,
-          title,
-          assignee = null,
-          reporter = null,
-          tester = null,
-          overview = null,
-          body = null,
-          recommended_solution = null,
-          actual_solution = null,
-          link = null,
-          ticket_key = null,
-          comments = [],
-          created_at = null,
-          updated_at = null
-        } = ticketData
-        
-        // Format dates properly for PostgreSQL if they exist
-        const formattedCreatedAt = created_at instanceof Date ? created_at : created_at ? new Date(created_at) : null;
-        const formattedUpdatedAt = updated_at instanceof Date ? updated_at : updated_at ? new Date(updated_at) : null;
+          user_id,
+          user_name,
+          email,
+          phone_number,
+          postal_code,
+          home_address,
+          pwd,
+          helper,
+          via_points,
+          created_date,
+          updated_date
+        } = userInfo
 
         const query = `
-          INSERT INTO nphc_ops_helper.t_knowledge_jira (
-            id, title, assignee, reporter, tester, overview, body,
-            recommended_solution, actual_solution, link, ticket_key, comments, created_at, updated_at
+          INSERT INTO kampung_kaki.t_users (
+            user_id, 
+            user_name,
+            email,
+            phone_number,
+            postal_code,
+            home_address,
+            pwd,
+            helper,
+            via_points,
+            created_date,
+            updated_date 
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
           )
-          ON CONFLICT (id)
+          ON CONFLICT (user_id)
           DO UPDATE SET
-            title = EXCLUDED.title,
-            assignee = EXCLUDED.assignee,
-            reporter = EXCLUDED.reporter,
-            tester = EXCLUDED.tester,
-            overview = EXCLUDED.overview,
-            body = EXCLUDED.body,
-            recommended_solution = EXCLUDED.recommended_solution,
-            actual_solution = EXCLUDED.actual_solution,
-            link = EXCLUDED.link,
-            ticket_key = EXCLUDED.ticket_key,
-            comments = EXCLUDED.comments,
-            created_at = EXCLUDED.created_at,
-            updated_at = EXCLUDED.updated_at
-          RETURNING id;
+            user_name    = EXCLUDED.user_name,
+            email        = EXCLUDED.email,
+            phone_number = EXCLUDED.phone_number,
+            postal_code  = EXCLUDED.postal_code,
+            home_address = EXCLUDED.home_address,
+            pwd          = EXCLUDED.pwd,
+            helper       = EXCLUDED.helper,
+            via_points   = EXCLUDED.via_points,
+            created_date = EXCLUDED.created_date,
+            updated_date = EXCLUDED.updated_date;
         `
 
         const params = [
-          id,
-          title,
-          assignee,
-          reporter,
-          tester,
-          overview,
-          body,
-          recommended_solution,
-          actual_solution,
-          link,
-          ticket_key,
-          comments,
-          formattedCreatedAt,
-          formattedUpdatedAt  
+          user_id,
+          user_name,
+          email,
+          phone_number,
+          postal_code ?? null,
+          home_address ?? null,
+          pwd,
+          helper,
+          via_points ?? null,
+          created_date ?? null,
+          updated_date ?? null
         ]
 
-        const result = await db.query(query, params)
-        logger.debug(`Upserted Jira ticket with ID ${id}`)
-        return {
-          success: true,
-          data: undefined
-        }
+        await db.query(query, params)
+        logger.success(`Upserted user ${user_id}`)
+
+        return { success: true, data: undefined }
       } catch (error: any) {
-        logger.error(`Failed to upsert Jira ticket: ${error.message}`)
-        return {
-          success: false,
-          error: error.message
-        }
+        logger.error(`Failed to upsert user ${userInfo.user_id}: ${error.message}`)
+        return { success: false, error: error.message }
       }
     },
+
+    
   }
 }
 

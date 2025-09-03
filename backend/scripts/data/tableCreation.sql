@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS kampung_kaki.t_users (
     pwd BOOLEAN,
     helper BOOLEAN,
     via_points VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
 );
 
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_requests{
