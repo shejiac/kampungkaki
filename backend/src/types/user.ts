@@ -1,5 +1,5 @@
 export interface User{
-    user_id: string,
+    user_id: number,
     user_name: string,
     email: string,
     phone_number: number,
@@ -13,25 +13,25 @@ export interface User{
 }
 
 export interface Pwd{
-    user_id: string,
+    user_id: number,
     user_name: string,
     email: string,
     phone_number: number,
     postal_code?: number,
     home_address: string,
-    pwd: boolean,
+    pwd: true,
     created_date?: Date,
     updated_date?: Date 
 }
 
 export interface Helper{
-    user_id: string,
+    user_id: number,
     user_name: string,
     email: string,
     phone_number: number,
     postal_code?: number,
     home_address?: string,
-    helper: boolean,
+    helper: true,
     via_points?: number,
     created_date?: Date,
     updated_date?: Date 
