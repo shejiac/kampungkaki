@@ -3,12 +3,18 @@
  * Provides reusable database operations for users.
  */
 import { User } from '../../types/user'
+import type { RequestInfo } from "../../types/request";
 import logger from './logger'
 import { DbInterface, DbQueryResult } from '../../types/db'
 
 export interface CommonQueries {
   upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
 }
+
+export interface CommonQueries {
+  upsertRequest: (requestInfo: RequestInfo) => Promise<DbQueryResult<void>>;
+}
+
 
 /**
  * Creates common database query helpers
@@ -87,6 +93,77 @@ const commonQueries = (db: DbInterface): CommonQueries => {
       }
     },
 
+    upsertRequest: async (requestInfo: RequestInfo) => {
+      try {
+        const {
+          requester_id,
+          request_title,
+          request_type,
+          request_description,
+          request_location,
+          request_initial_meet,
+          request_time,
+          request_approx_duration,
+          request_priority,
+          created_date,
+          updated_date
+        } = requestInfo;
+        
+
+        const query = `
+          INSERT INTO kampung_kaki.t_requests (
+            requester_id, 
+            request_title,
+            request_type,
+            request_description, 
+            request_location,
+            request_initial_meet,
+            request_time,
+            request_approx_duration,
+            request_priority,
+            created_date,
+            updated_date 
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+          )
+          ON CONFLICT (user_id)
+          DO UPDATE SET
+            requester_id            = EXCLUDED.requester_id,
+            request_title           = EXCLUDED.request_title,
+            request_type            = EXCLUDED.request_type,
+            request_description     = EXCLUDED.request_description,
+            request_location        = EXCLUDED.request_location,
+            request_initial_meet    = EXCLUDED.request_initial_meet,
+            request_time            = EXCLUDED.request_time,
+            request_approx_duration = EXCLUDED.request_approx_duration, 
+            request_priority        = EXCLUDED.request_priority,
+            created_date            = EXCLUDED.created_date,
+            updated_date            = EXCLUDED.updated_date;
+        `
+
+        const params = [
+          requester_id,
+          request_title,
+          request_type,
+          request_description,
+          request_location,
+          request_initial_meet,
+          request_time,
+          request_approx_duration,
+          request_priority,
+          created_date ?? null,
+          updated_date ?? null
+        ]
+
+        await db.query(query, params)
+        logger.success(`Upserted request ${requester_id}`)
+
+        return { success: true, data: undefined }
+      } catch (error: any) {
+        logger.error(`Failed to upsert request ${requestInfo.requester_id}: ${error.message}`)
+        return { success: false, error: error.message }
+      }
+    },
     
   }
 }
