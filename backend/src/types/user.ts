@@ -7,7 +7,7 @@ export interface User {
     home_address?: string,
     pwd: boolean,
     volunteer: boolean,
-    via_points?: string,
+    via_hours?: string,
     created_at?: Date,
     updated_at?: Date 
 }
@@ -32,7 +32,7 @@ export interface Volunteer {
     postal_code?: string,
     home_address?: string,
     volunteer: true,
-    via_points?: string,
+    via_hours?: string,
     created_at?: Date,
     updated_at?: Date 
 }

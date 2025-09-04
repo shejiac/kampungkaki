@@ -1,4 +1,5 @@
-// backend/scripts/dbSetup.ts
+//run npx ts-node backend/scripts/dbSetup.ts
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -7,7 +8,6 @@ import path from "path";
 import { Pool } from "pg";
 import { fileURLToPath } from "url";
 
-// ✅ Fix for __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -50,7 +50,7 @@ console.log("Connected to DB.");
   } catch (error: any) {
     await client.query("ROLLBACK");
     console.error("Database setup failed:", error.message);
-    throw error; // ✅ throw instead of process.exit for reusability
+    throw error; 
   } finally {
     client.release();
     await pool.end();

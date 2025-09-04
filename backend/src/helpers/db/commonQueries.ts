@@ -28,13 +28,13 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         try {
           const {
             user_id, user_name, email, phone_number, postal_code,
-            home_address, pwd, volunteer, via_points, created_at, updated_at
+            home_address, pwd, volunteer, via_hours, created_at, updated_at
           } = userInfo;
 
           const query = `
             INSERT INTO kampung_kaki.t_users (
               user_id, user_name, email, phone_number, postal_code,
-              home_address, pwd, volunteer, via_points, created_at, updated_at
+              home_address, pwd, volunteer, via_hours, created_at, updated_at
             ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
             ON CONFLICT (user_id)
             DO UPDATE SET
@@ -45,13 +45,13 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               home_address = EXCLUDED.home_address,
               pwd          = EXCLUDED.pwd,
               volunteer       = EXCLUDED.volunteer,
-              via_points   = EXCLUDED.via_points,
+              via_hours   = EXCLUDED.via_hours,
               updated_at   = EXCLUDED.updated_at;
           `;
 
           const params = [
             user_id, user_name, email, phone_number, postal_code ?? null,
-            home_address ?? null, pwd, volunteer, via_points ?? null,
+            home_address ?? null, pwd, volunteer, via_hours ?? null,
             created_at ?? null, updated_at ?? null
           ];
 
