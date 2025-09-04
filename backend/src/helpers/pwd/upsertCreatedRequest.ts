@@ -8,7 +8,6 @@ import { RequestInfo } from "../../types/request";
 export async function upsertCreatedRequest(request: RequestInfo): Promise<boolean> {
   try {
     const queries = db.helpers;
-
     const result = await queries.upsertRequest(request);
     if (!result.success) {
       logger.error(`Failed to upsert request ${request.request_id}`);

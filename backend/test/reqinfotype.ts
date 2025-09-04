@@ -1,4 +1,5 @@
-import { RequestInfo } from "../src/types/request"; 
+import { RequestInfo } from '../src/types/request';
+import { upsertCreatedRequest } from "../src/helpers/pwd/upsertCreatedRequest";
 
 export const mockRequests: RequestInfo[] = [
   {
@@ -82,3 +83,13 @@ export const mockRequests: RequestInfo[] = [
     updated_at: new Date("2025-03-03T13:00:00Z"),
   },
 ];
+
+
+export async function testUpsertRequest(mockRequests: RequestInfo[]): Promise<string> {
+  for (const request of mockRequests) {
+    await upsertCreatedRequest(request); 
+  }
+  return "upserted request";
+}
+
+testUpsertRequest(mockRequests)
