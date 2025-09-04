@@ -1,5 +1,6 @@
 import { RequestInfo } from '../src/types/request';
-import { upsertCreatedRequest } from "../src/helpers/pwd/upsertCreatedRequest";
+import { upsertCreatedRequest } from '../src/helpers/pwd/upsertCreatedRequest';
+
 
 export const mockRequests: RequestInfo[] = [
   {
@@ -85,11 +86,20 @@ export const mockRequests: RequestInfo[] = [
 ];
 
 
-export async function testUpsertRequest(mockRequests: RequestInfo[]): Promise<string> {
-  for (const request of mockRequests) {
-    await upsertCreatedRequest(request); 
+export async function testUpsertRequest(requests: RequestInfo[]): Promise<void> {
+  for (const req of requests) {
+    try {
+      const result = await upsertCreatedRequest(req);
+      console.log('Upserted request ${req.request_id}:', result);
+    } catch (err) {
+      console.error('Failed to upsert request ${req.request_id}:', err);
+    }
   }
-  return "upserted request";
+  console.log("All requests processed.");
 }
 
-testUpsertRequest(mockRequests)
+// Run it immediately when file is executed
+(async () => {
+  await testUpsertRequest(mockRequests);
+})();
+
