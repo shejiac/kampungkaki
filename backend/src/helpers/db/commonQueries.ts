@@ -291,7 +291,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         }
       },
 
-      getNumberOfRequests: async (): Promise<DbQueryResult<number>> => {
+      getNumberOfRequests: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_requests`;
         const result = await db.query(query);
@@ -302,7 +302,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       }
     },
 
-    getNumberOfVolunteers: async (): Promise<DbQueryResult<number>> => {
+    getNumberOfVolunteers: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_users WHERE volunteer = TRUE`;
         const result = await db.query(query);
@@ -313,10 +313,12 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       }
     },
 
-    getNumberOfPWDs: async (): Promise<DbQueryResult<number>> => {
+    getNumberOfPWDs: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_users WHERE pwd = TRUE`;
+        
         const result = await db.query(query);
+        
         return { success: true, data: parseInt(result.rows[0].count, 10) };
       } catch (error: any) {
         logger.error(`Error fetching number of PWD users: ${error.message}`);

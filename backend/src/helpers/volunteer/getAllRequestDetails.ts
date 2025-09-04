@@ -6,6 +6,7 @@ import { OpenRequestWithNames } from "../../types/request";
 
 /**
  * Fetch all open requests and enrich them with requester username
+ * Returns request info (refer to request type) and requester username 
  */
 
 export async function getAllRequestDetails(): Promise<OpenRequestWithNames[]> {
@@ -37,3 +38,4 @@ export async function getAllRequestDetails(): Promise<OpenRequestWithNames[]> {
     throw error;
   }
 }
+

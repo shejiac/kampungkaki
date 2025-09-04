@@ -1,14 +1,14 @@
 import db from "../db";
 import logger from "../db/logger";
-import { RequestInfo } from "../../types/request";
+import { AcceptedRequestInfo } from "../../types/request";
 
 /**
- * Upsert a request using the commonQueries helper
+ * Upsert an accepted request using the commonQueries helper
  */
-export async function upsertCreatedRequest(request: RequestInfo): Promise<boolean> {
+export async function upsertCreatedRequest(request: AcceptedRequestInfo): Promise<boolean> {
   try {
     const queries = db.helpers;
-    const result = await queries.upsertRequest(request);
+    const result = await queries.upsertAcceptedRequest(request);
     if (!result.success) {
       logger.error(`Failed to upsert request ${request.request_id}`);
       return false;

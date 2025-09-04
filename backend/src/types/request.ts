@@ -22,7 +22,7 @@ export interface AcceptedRequestInfo {
     request_start_time?: Date,
     request_end_time?: Date,
     request_total_time?: number,
-    request_status: string
+    request_status: RequestStatus
 }
 
 export type RequestStatus = 'open' | 'ongoing' | 'closed';
