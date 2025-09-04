@@ -21,7 +21,6 @@ const query = async (text: string, params: any[] = []): Promise<QueryResult> => 
     const res = await pool.query(text, params)
     const duration = Date.now() - start
 
-
     return res
   } catch (error: any) {
     logger.error(`Database query error: ${error.message}`)
@@ -31,13 +30,17 @@ const query = async (text: string, params: any[] = []): Promise<QueryResult> => 
   }
 }
 
+
 const getClient = async (): Promise<PoolClient> => {
   const client = await pool.connect()
   const originalQuery = client.query.bind(client)
   const originalRelease = client.release.bind(client)
 
+  // Override query to track lastQuery
   client.query = function (...args: [any, ...any[]]) {
+    // @ts-ignore
     client.lastQuery = args
+    // @ts-ignore
     return originalQuery.apply(client, args)
   } as typeof client.query
 
