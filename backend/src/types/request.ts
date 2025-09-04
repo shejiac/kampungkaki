@@ -1,5 +1,5 @@
 export interface RequestInfo {
-    request_id: string,   
+    request_id?: string,   
     requester_id: string,    
     volunteer_id?: string,            
     request_title: string,

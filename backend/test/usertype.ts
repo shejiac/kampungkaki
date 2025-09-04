@@ -66,10 +66,11 @@ export async function testUpsertUsers(users: User[]): Promise<void> {
         console.log('Upserted user ${u.user_id}:', result);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error('Failed to upsert user ${u.user_id}: ${msg}');
+        console.error(`Failed to upsert user ${u.user_id}: ${msg}`);
       }
     }
-    console.log("🎉 All users processed.");
+    console.log("All users processed.");
+    return 
   }
   
   // Run immediately when file executes

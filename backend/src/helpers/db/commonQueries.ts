@@ -82,7 +82,8 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               request_description, request_location, request_initial_meet,
               request_time, request_approx_duration, request_priority,
               request_status, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+            )
+            VALUES (COALESCE($1, uuid_generate_v4()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
             ON CONFLICT (request_id)
             DO UPDATE SET
               volunteer_id = EXCLUDED.volunteer_id,
@@ -95,18 +96,26 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               request_approx_duration = EXCLUDED.request_approx_duration,
               request_priority = EXCLUDED.request_priority,
               request_status = EXCLUDED.request_status,
-              updated_at = EXCLUDED.updated_at;
+              updated_at = NOW()
+            RETURNING request_id;
           `;
-
           const params = [
-            request_id, requester_id, volunteer_id ?? null, request_title, request_type,
-            request_description, request_location, request_initial_meet,
-            request_time, request_approx_duration, request_priority,
-            request_status, created_at ?? null, updated_at ?? null
+            request_id ?? null,
+            requester_id,
+            volunteer_id ?? null,
+            request_title,
+            request_type,
+            request_description,
+            request_location,
+            request_initial_meet,
+            request_time,
+            request_approx_duration,
+            request_priority,
+            request_status,
           ];
 
           await db.query(query, params);
-          logger.success(`Upserted request ${request_id}`);
+          logger.success(`Upserted request`);
           return { success: true, data: undefined };
         } catch (error: any) {
           logger.error(`Failed to upsert request ${requestInfo.request_id}: ${error.message}`);
