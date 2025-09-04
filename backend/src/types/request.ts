@@ -24,3 +24,10 @@ export interface AcceptedRequestInfo {
     request_total_time?: number,
     request_status: string
 }
+
+export type RequestStatus = 'open' | 'ongoing' | 'closed';
+
+export interface OpenRequestWithNames {
+  request: RequestInfo;
+  requester_name: string;
+}

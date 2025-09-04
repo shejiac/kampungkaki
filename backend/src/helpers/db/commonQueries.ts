@@ -1,5 +1,5 @@
 import { User } from '../../types/user';
-import { RequestInfo, AcceptedRequestInfo } from "../../types/request";
+import { RequestInfo, AcceptedRequestInfo, RequestStatus } from "../../types/request";
 import logger from './logger';
 import { DbInterface, DbQueryResult } from '../../types/db';
 import { Chat, ChatMessage } from '../../types/chats'; 
@@ -20,6 +20,7 @@ export interface CommonQueries {
   getNumberOfRequests: () => Promise<DbQueryResult<number>>;
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
   getNumberOfHelpers: () => Promise<DbQueryResult<number>>;
+  getRequestsByStatus: (requestStatus: RequestStatus) => Promise<DbQueryResult<RequestInfo[]>>;
 }
 
 const commonQueries = (db: DbInterface): CommonQueries => ({
@@ -307,6 +308,22 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         return { success: true, data: parseInt(result.rows[0].count, 10) };
       } catch (error: any) {
         logger.error(`Error fetching number of PWD users: ${error.message}`);
+        return { success: false, error: error.message };
+      }
+    },
+    getRequestsByStatus: async (status: RequestStatus): Promise<DbQueryResult<RequestInfo[]>> => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_requests
+          WHERE request_status = $1
+          ORDER BY created_at DESC
+        `;
+        const result = await db.query(query, [status]);
+
+        return { success: true, data: result.rows as RequestInfo[] };
+      } catch (error: any) {
+        logger.error(`Error fetching requests with status ${status}: ${error.message}`);
         return { success: false, error: error.message };
       }
     },
