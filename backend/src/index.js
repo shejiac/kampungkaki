@@ -19,5 +19,5 @@ app.use("/api/requests", requestRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(Server running on http://localhost:);
+  console.log("Server running on http://localhost:");
 });

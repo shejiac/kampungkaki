@@ -3,6 +3,10 @@ import { RequestInfo, AcceptedRequestInfo, RequestStatus } from "../../types/req
 import logger from './logger';
 import { DbInterface, DbQueryResult } from '../../types/db';
 import { Chat, ChatMessage } from '../../types/chats'; 
+import { errorMessage } from './errorMessage';
+
+
+
 
 export interface CommonQueries {
   upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
@@ -156,7 +160,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as User };
         } catch (error) {
-          logger.error(`Error fetching user ${userId}: ${error.message}`);
+          logger.error(`Error fetching user ${userId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -170,7 +174,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
-          logger.error(`Error fetching request by requester: ${requesterId}: ${error.message}`);
+          logger.error(`Error fetching request by requester: ${requesterId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -184,7 +188,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as RequestInfo };
         } catch (error) {
-          logger.error(`Error fetching request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching request ${requestId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -198,7 +202,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
-          logger.error(`Error fetching request by requester: ${volunteerId}: ${error.message}`);
+          logger.error(`Error fetching request by requester: ${volunteerId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -212,7 +216,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as AcceptedRequestInfo };
         } catch (error) {
-          logger.error(`Error fetching request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching request ${requestId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -232,7 +236,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           logger.success(`Upserted chat ${chat_id}`);
           return { success: true, data: undefined };
         } catch (error: any) {
-          logger.error(`Failed to upsert chat ${chat.chat_id}: ${error.message}`);
+          logger.error(`Failed to upsert chat ${chat.chat_id}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -252,7 +256,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           logger.success(`Upserted message ${message_id}`);
           return { success: true, data: undefined };
         } catch (error: any) {
-          logger.error(`Failed to upsert message ${msg.message_id}: ${error.message}`);
+          logger.error(`Failed to upsert message ${msg.message_id}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -263,7 +267,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const result = await db.query(query, [requestId]);
           return { success: true, data: result.rows as Chat[] };
         } catch (error: any) {
-          logger.error(`Error fetching chats for request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -274,7 +278,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const result = await db.query(query, [chatId]);
           return { success: true, data: result.rows as ChatMessage[] };
         } catch (error: any) {
-          logger.error(`Error fetching messages for chat ${chatId}: ${error.message}`);
+          logger.error(`Error fetching messages for chat ${chatId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
