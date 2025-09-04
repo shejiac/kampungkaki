@@ -1,5 +1,6 @@
 
 import { User } from '../src/types/user';
+import { upsertUser } from '../src/helpers/profile/upsertUsers'
 
 export const mockUsers: User[] = [
   {
@@ -57,3 +58,21 @@ export const mockUsers: User[] = [
     updated_at: new Date("2025-02-28T14:30:00Z"),
   },
 ];
+
+export async function testUpsertUsers(users: User[]): Promise<void> {
+    for (const u of users) {
+      try {
+        const result = await upsertUser(u); // assuming it upserts ONE user
+        console.log('Upserted user ${u.user_id}:', result);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('Failed to upsert user ${u.user_id}: ${msg}');
+      }
+    }
+    console.log("🎉 All users processed.");
+  }
+  
+  // Run immediately when file executes
+  (async () => {
+    await testUpsertUsers(mockUsers);
+  })();
