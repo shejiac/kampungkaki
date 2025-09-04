@@ -8,8 +8,6 @@ import { RequestInfo, OpenRequestWithNames } from "../../types/request";
  * Fetch all open requests and enrich them with requester username
  */
 
-
-
 export async function getAllRequestDetails(): Promise<OpenRequestWithNames[]> {
   try {
     const queries = db.helpers;

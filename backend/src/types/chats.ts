@@ -2,7 +2,7 @@ export interface Chat {
     chat_id: string,        
     request_id: string,     
     requester_id: string,    
-    helper_id: string,       
+    volunteer_id: string,       
     created_at?: Date
 }
 

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS kampung_kaki.t_users (
     postal_code VARCHAR(255),
     home_address TEXT,
     pwd BOOLEAN,
-    helper BOOLEAN,
+    volunteer BOOLEAN,
     via_points VARCHAR(255),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS kampung_kaki.t_users (
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_requests (
     request_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     requester_id UUID NOT NULL,
-    helper_id UUID,
+    volunteer_id UUID,
     request_title TEXT, 
     request_type TEXT, 
     request_description TEXT, 
@@ -30,31 +30,31 @@ CREATE TABLE IF NOT EXISTS kampung_kaki.t_requests (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_requester FOREIGN KEY (requester_id) REFERENCES kampung_kaki.t_users(user_id) ON DELETE CASCADE,
-    CONSTRAINT fk_helper FOREIGN KEY (helper_id) REFERENCES kampung_kaki.t_users(user_id) ON DELETE SET NULL
+    CONSTRAINT fk_volunteer FOREIGN KEY (volunteer_id) REFERENCES kampung_kaki.t_users(user_id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_accepted_requests (
     request_id UUID NOT NULL,
     requester_id UUID NOT NULL,
-    helper_id UUID,
+    volunteer_id UUID,
     request_start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     request_end_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     request_total_time INT,
     request_status TEXT,
     CONSTRAINT fk_request FOREIGN KEY (request_id) REFERENCES kampung_kaki.t_requests(request_id) ON DELETE CASCADE,
     CONSTRAINT fk_requester FOREIGN KEY (requester_id) REFERENCES kampung_kaki.t_users(user_id),
-    CONSTRAINT fk_helper FOREIGN KEY (helper_id) REFERENCES kampung_kaki.t_users(user_id)
+    CONSTRAINT fk_volunteer FOREIGN KEY (volunteer_id) REFERENCES kampung_kaki.t_users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_chats (
     chat_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     request_id UUID NOT NULL,
     requester_id UUID NOT NULL,
-    helper_id UUID NOT NULL,
+    volunteer_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_request FOREIGN KEY (request_id) REFERENCES kampung_kaki.t_requests(request_id) ON DELETE CASCADE,
     CONSTRAINT fk_requester FOREIGN KEY (requester_id) REFERENCES kampung_kaki.t_users(user_id),
-    CONSTRAINT fk_helper FOREIGN KEY (helper_id) REFERENCES kampung_kaki.t_users(user_id)
+    CONSTRAINT fk_volunteer FOREIGN KEY (volunteer_id) REFERENCES kampung_kaki.t_users(user_id)
 );
 
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_chats_messages (
