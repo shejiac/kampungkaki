@@ -14,6 +14,7 @@ export interface CommonQueries {
   getRequestByRequesterId: (requesterId: number) => Promise<DbQueryResult<RequestInfo>>;
   getRequestByRequestId: (requestId: number) => Promise<DbQueryResult<RequestInfo>>;
   getRequestByHelperId: (helperId: number) => Promise<DbQueryResult<RequestInfo>>;
+  getAcceptedRequestByRequestId: (requestId: number) => Promise<DbQueryResult<RequestInfo>>;
 }
 
 /**
@@ -254,6 +255,30 @@ const commonQueries = (db: DbInterface): CommonQueries => {
         const result = await db.query(query, [helperId]);
         if (result.rows.length === 0) {
           logger.debug(`No requests found with Id ${helperId}`)
+          return {
+            success: false,
+            error: 'Request not found'
+          }
+        }
+        return { 
+          success: true, 
+          data: result.rows[0] as RequestInfo
+        }; 
+      } catch (error) {
+        console.error("Error fetching request:", error);
+        throw error;
+      }
+    },
+    getAcceptedRequestByRequestId: async (requestId: number) => {
+      try {
+        const query = `
+          SELECT *
+          FROM kampung_kaki.t_accepted_requests
+          WHERE request_id = $1
+        `;
+        const result = await db.query(query, [requestId]);
+        if (result.rows.length === 0) {
+          logger.debug(`No accepted requests found with Id ${requestId}`)
           return {
             success: false,
             error: 'Request not found'
