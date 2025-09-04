@@ -31,30 +31,29 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       upsertUser: async (userInfo: User) => {
         try {
           const {
-            user_id, user_name, email, phone_number, postal_code,
+            user_id, user_name, phone_number,
             home_address, pwd, volunteer, via_hours, created_at, updated_at
           } = userInfo;
 
           const query = `
             INSERT INTO kampung_kaki.t_users (
-              user_id, user_name, email, phone_number, postal_code,
+              user_id, user_name, phone_number, 
               home_address, pwd, volunteer, via_hours, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             ON CONFLICT (user_id)
             DO UPDATE SET
+              user_id      = EXCLUDED.user_id,
               user_name    = EXCLUDED.user_name,
-              email        = EXCLUDED.email,
               phone_number = EXCLUDED.phone_number,
-              postal_code  = EXCLUDED.postal_code,
               home_address = EXCLUDED.home_address,
               pwd          = EXCLUDED.pwd,
-              volunteer       = EXCLUDED.volunteer,
-              via_hours   = EXCLUDED.via_hours,
+              volunteer    = EXCLUDED.volunteer,
+              via_hours    = EXCLUDED.via_hours,
               updated_at   = EXCLUDED.updated_at;
           `;
 
           const params = [
-            user_id, user_name, email, phone_number, postal_code ?? null,
+            user_id, user_name, phone_number,
             home_address ?? null, pwd, volunteer, via_hours ?? null,
             created_at ?? null, updated_at ?? null
           ];

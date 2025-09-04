@@ -3,26 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE kampung_kaki.t_users (
     user_id VARCHAR(128) PRIMARY KEY, 
     user_name VARCHAR(255),
-    email TEXT,
     phone_number VARCHAR(255),
-    postal_code VARCHAR(255),
-    home_address TEXT,
-    pwd BOOLEAN,
-    volunteer BOOLEAN,
-    via_hours INTERVAL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Users table
-CREATE TABLE IF NOT EXISTS kampung_kaki.t_users (
-    user_id VARCHAR(128) PRIMARY KEY,  -- Firebase UID
-    user_name VARCHAR(255),
-    email TEXT,
-    phone_number VARCHAR(255),
-    postal_code VARCHAR(255),
     home_address TEXT,
     pwd BOOLEAN,
     volunteer BOOLEAN,

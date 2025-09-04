@@ -10,7 +10,7 @@ export interface RequestInfo {
     request_time: string,          
     request_approx_duration: string,
     request_priority: string, 
-    request_status: "open" | "ongoing" | "closed",
+    request_status: RequestStatus,
     created_at?: Date,
     updated_at?: Date
 }
