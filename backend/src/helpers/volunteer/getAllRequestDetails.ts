@@ -1,7 +1,7 @@
 
 import db from "../db";
 import logger from "../db/logger";
-import { RequestInfo, OpenRequestWithNames } from "../../types/request"; 
+import { OpenRequestWithNames } from "../../types/request"; 
 
 
 /**
