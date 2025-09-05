@@ -12,14 +12,14 @@ export async function getRequestbyRequestId(request_id: string): Promise<Request
 
     const requestsResult = await queries.getRequestByRequestId(request_id);
     if (!requestsResult.success) {
-      logger.error(`Failed to fetch requests for requester ${request_id}`);
+      logger.error(`Failed to fetch request for request id ${request_id}`);
       throw error;
     }
 
     const request = requestsResult.data;
     return request
   } catch (error: any) {
-    logger.error(`Error fetching past requests: ${error.message}`);
+    logger.error(`Error fetching request: ${error.message}`);
     throw error;
   }
 }
