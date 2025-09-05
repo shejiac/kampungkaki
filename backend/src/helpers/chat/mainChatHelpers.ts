@@ -6,13 +6,15 @@ import logger from '../db/logger'
 import { error } from "console";
 import { getChatMessages, getLastChatMessage } from './getChatMessages'
 import { upsertAcceptedRequest } from './upsertAcceptedRequest'
-import { RequestInfo, AcceptedRequestInfo } from '../../types/request'
+import {AcceptedRequestInfo } from '../../types/request'
 import { updateStatus } from './updateStatus'
+import {getRequesterbyRequest} from './getRequestByRequestId'
 
 
 // 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary,
 // also upserts request as an accepted request 
-export async function acceptRequest(requestId: string, beneficiaryId: string, volunteerId: string): Promise<string>{
+export async function acceptRequest(requestId: string, volunteerId: string): Promise<string>{
+    const beneficiaryId = await getRequesterbyRequest(requestId)
     const chat: Chat = {
         request_id: requestId,
         requester_id: beneficiaryId,
