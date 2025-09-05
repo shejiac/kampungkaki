@@ -1,15 +1,11 @@
-// backend/scripts/dbSetup.ts
+// run with: npx ts-node backend/scripts/dbSetup.ts
+
 import dotenv from "dotenv";
 dotenv.config();
 
 import fs from "fs";
 import path from "path";
 import { Pool } from "pg";
-import { fileURLToPath } from "url";
-
-// ✅ Fix for __dirname in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const pool = new Pool({
   user: process.env.DB_USER || "postgres",
@@ -31,11 +27,10 @@ const tableCreationSQL = fs.readFileSync(
 );
 console.log("SQL files loaded.");
 
-
 export async function setupDatabase(): Promise<void> {
-console.log("Connecting to DB...");
-const client = await pool.connect();
-console.log("Connected to DB.");
+  console.log("Connecting to DB...");
+  const client = await pool.connect();
+  console.log("Connected to DB.");
   try {
     await client.query("BEGIN");
 
@@ -50,17 +45,17 @@ console.log("Connected to DB.");
   } catch (error: any) {
     await client.query("ROLLBACK");
     console.error("Database setup failed:", error.message);
-    throw error; // ✅ throw instead of process.exit for reusability
+    throw error;
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// Only run if this file is executed directly
+if (require.main === module) {
   setupDatabase().catch((err) => {
     console.error("Setup failed:", err);
     process.exit(1);
   });
 }
-

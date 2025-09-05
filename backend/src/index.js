@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
@@ -8,10 +8,8 @@ import './config/firebase.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
-// Import your existing API routes here
 // import apiRoutes from './routes/api.js';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
@@ -42,7 +40,6 @@ app.use('/api/auth', authRoutes);
 // Health check route
 app.get('/health', async (req, res) => {
   try {
-    // Test database connection
     await prisma.$queryRaw`SELECT 1`;
     res.json({ 
       status: 'healthy',
@@ -80,7 +77,6 @@ app.use('*', (req, res) => {
 process.on('SIGINT', async () => {
   console.log('Shutting down gracefully...');
   await prisma.$disconnect();
-  // Close PostgreSQL pool
   const { pool } = await import('./config/database.js');
   await pool.end();
   process.exit(0);
@@ -89,7 +85,6 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   console.log('Shutting down gracefully...');
   await prisma.$disconnect();
-  // Close PostgreSQL pool
   const { pool } = await import('./config/database.js');
   await pool.end();
   process.exit(0);

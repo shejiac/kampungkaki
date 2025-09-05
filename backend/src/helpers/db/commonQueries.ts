@@ -3,6 +3,10 @@ import { RequestInfo, AcceptedRequestInfo, RequestStatus } from "../../types/req
 import logger from './logger';
 import { DbInterface, DbQueryResult } from '../../types/db';
 import { Chat, ChatMessage } from '../../types/chats'; 
+import { errorMessage } from './errorMessage';
+
+
+
 
 export interface CommonQueries {
   upsertUser: (userInfo: User) => Promise<DbQueryResult<void>>;
@@ -27,31 +31,30 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       upsertUser: async (userInfo: User) => {
         try {
           const {
-            user_id, user_name, email, phone_number, postal_code,
-            home_address, pwd, volunteer, via_points, created_at, updated_at
+            user_id, user_name, phone_number,
+            home_address, pwd, volunteer, via_hours, created_at, updated_at
           } = userInfo;
 
           const query = `
             INSERT INTO kampung_kaki.t_users (
-              user_id, user_name, email, phone_number, postal_code,
-              home_address, pwd, volunteer, via_points, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+              user_id, user_name, phone_number, 
+              home_address, pwd, volunteer, via_hours, created_at, updated_at
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             ON CONFLICT (user_id)
             DO UPDATE SET
+              user_id      = EXCLUDED.user_id,
               user_name    = EXCLUDED.user_name,
-              email        = EXCLUDED.email,
               phone_number = EXCLUDED.phone_number,
-              postal_code  = EXCLUDED.postal_code,
               home_address = EXCLUDED.home_address,
               pwd          = EXCLUDED.pwd,
-              volunteer       = EXCLUDED.volunteer,
-              via_points   = EXCLUDED.via_points,
+              volunteer    = EXCLUDED.volunteer,
+              via_hours    = EXCLUDED.via_hours,
               updated_at   = EXCLUDED.updated_at;
           `;
 
           const params = [
-            user_id, user_name, email, phone_number, postal_code ?? null,
-            home_address ?? null, pwd, volunteer, via_points ?? null,
+            user_id, user_name, phone_number,
+            home_address ?? null, pwd, volunteer, via_hours ?? null,
             created_at ?? null, updated_at ?? null
           ];
 
@@ -79,7 +82,8 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               request_description, request_location, request_initial_meet,
               request_time, request_approx_duration, request_priority,
               request_status, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+            )
+            VALUES (COALESCE($1, uuid_generate_v4()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
             ON CONFLICT (request_id)
             DO UPDATE SET
               volunteer_id = EXCLUDED.volunteer_id,
@@ -92,18 +96,26 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               request_approx_duration = EXCLUDED.request_approx_duration,
               request_priority = EXCLUDED.request_priority,
               request_status = EXCLUDED.request_status,
-              updated_at = EXCLUDED.updated_at;
+              updated_at = NOW()
+            RETURNING request_id;
           `;
-
           const params = [
-            request_id, requester_id, volunteer_id ?? null, request_title, request_type,
-            request_description, request_location, request_initial_meet,
-            request_time, request_approx_duration, request_priority,
-            request_status, created_at ?? null, updated_at ?? null
+            request_id ?? null,
+            requester_id,
+            volunteer_id ?? null,
+            request_title,
+            request_type,
+            request_description,
+            request_location,
+            request_initial_meet,
+            request_time,
+            request_approx_duration,
+            request_priority,
+            request_status,
           ];
 
           await db.query(query, params);
-          logger.success(`Upserted request ${request_id}`);
+          logger.success(`Upserted request`);
           return { success: true, data: undefined };
         } catch (error: any) {
           logger.error(`Failed to upsert request ${requestInfo.request_id}: ${error.message}`);
@@ -156,7 +168,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as User };
         } catch (error) {
-          logger.error(`Error fetching user ${userId}: ${error.message}`);
+          logger.error(`Error fetching user ${userId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -170,7 +182,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
-          logger.error(`Error fetching request by requester: ${requesterId}: ${error.message}`);
+          logger.error(`Error fetching request by requester: ${requesterId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -184,7 +196,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as RequestInfo };
         } catch (error) {
-          logger.error(`Error fetching request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching request ${requestId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -198,7 +210,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
-          logger.error(`Error fetching request by requester: ${volunteerId}: ${error.message}`);
+          logger.error(`Error fetching request by requester: ${volunteerId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -212,7 +224,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           }
           return { success: true, data: result.rows[0] as AcceptedRequestInfo };
         } catch (error) {
-          logger.error(`Error fetching request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching request ${requestId}: ${errorMessage(error)}`);
           throw error;
         }
       },
@@ -232,7 +244,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           logger.success(`Upserted chat ${chat_id}`);
           return { success: true, data: undefined };
         } catch (error: any) {
-          logger.error(`Failed to upsert chat ${chat.chat_id}: ${error.message}`);
+          logger.error(`Failed to upsert chat ${chat.chat_id}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -252,7 +264,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           logger.success(`Upserted message ${message_id}`);
           return { success: true, data: undefined };
         } catch (error: any) {
-          logger.error(`Failed to upsert message ${msg.message_id}: ${error.message}`);
+          logger.error(`Failed to upsert message ${msg.message_id}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -263,7 +275,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const result = await db.query(query, [requestId]);
           return { success: true, data: result.rows as Chat[] };
         } catch (error: any) {
-          logger.error(`Error fetching chats for request ${requestId}: ${error.message}`);
+          logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
@@ -274,12 +286,12 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const result = await db.query(query, [chatId]);
           return { success: true, data: result.rows as ChatMessage[] };
         } catch (error: any) {
-          logger.error(`Error fetching messages for chat ${chatId}: ${error.message}`);
+          logger.error(`Error fetching messages for chat ${chatId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
 
-      getNumberOfRequests: async (): Promise<DbQueryResult<number>> => {
+      getNumberOfRequests: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_requests`;
         const result = await db.query(query);
@@ -290,7 +302,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       }
     },
 
-    getNumberOfVolunteers: async (): Promise<DbQueryResult<number>> => {
+    getNumberOfVolunteers: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_users WHERE volunteer = TRUE`;
         const result = await db.query(query);
@@ -301,10 +313,12 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
       }
     },
 
-    getNumberOfPWDs: async (): Promise<DbQueryResult<number>> => {
+    getNumberOfPWDs: async () => {
       try {
         const query = `SELECT COUNT(*) AS count FROM kampung_kaki.t_users WHERE pwd = TRUE`;
+        
         const result = await db.query(query);
+        
         return { success: true, data: parseInt(result.rows[0].count, 10) };
       } catch (error: any) {
         logger.error(`Error fetching number of PWD users: ${error.message}`);

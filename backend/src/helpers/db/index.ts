@@ -1,8 +1,4 @@
-/**
- * Database connection and query management module for PostgreSQL interactions.
- * Provides a connection pool, transaction support, and query utilities using pg library.
- * Includes enhanced logging and error handling capabilities.
- */
+
 import { Pool, PoolClient, QueryResult } from 'pg'
 import logger from './logger'
 import commonQueriesFactory, { CommonQueries } from './commonQueries'
@@ -18,23 +14,12 @@ const pool = new Pool({
 pool.on('connect', () => logger.debug('Database connection established'))
 pool.on('error', (err: Error) => logger.error(`Unexpected database error: ${err.message}`))
 
-/**
- * Executes a database query with optional parameters
- * @param text - SQL query text to execute
- * @param params - Array of parameter values to use in the query
- * @returns Query result with rows and metadata
- * @throws Database error if query execution fails
- */
+
 const query = async (text: string, params: any[] = []): Promise<QueryResult> => {
   const start = Date.now()
   try {
     const res = await pool.query(text, params)
     const duration = Date.now() - start
-
-    // logger.debug(
-    //   `Executed query: ${text.replace(/\s*\n\s*/g, ' ')} ` +
-    //   `with params: ${JSON.stringify(params)} (${duration}ms)`
-    // )
 
     return res
   } catch (error: any) {
@@ -45,11 +30,7 @@ const query = async (text: string, params: any[] = []): Promise<QueryResult> => 
   }
 }
 
-/**
- * Gets a client from the connection pool for transaction operations
- * @returns Database client with enhanced logging and query tracking
- * @throws Connection error if unable to get client from pool
- */
+
 const getClient = async (): Promise<PoolClient> => {
   const client = await pool.connect()
   const originalQuery = client.query.bind(client)
@@ -71,11 +52,7 @@ const getClient = async (): Promise<PoolClient> => {
   return client
 }
 
-/**
- * Closes the database connection pool and releases all resources
- * @returns Resolves when pool is successfully closed
- * @throws If error occurs during pool shutdown
- */
+
 const destroy = async (): Promise<void> => {
   try {
     logger.debug('Closing database connection pool...')
