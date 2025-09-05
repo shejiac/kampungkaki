@@ -11,3 +11,11 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# backend secrets
+/backend/.env
+/backend/service-account.json
+
+# frontend envs
+/frontend/.env*
+

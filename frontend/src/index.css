@@ -1,1 +1,166 @@
-@import "tailwindcss";
+/* index.css – global styles for App.jsx */
+
+/* Reset & base */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+  color: #111827; /* Tailwind gray-900 */
+}
+
+/* Flex wrapper (see App.jsx return) */
+.min-h-screen {
+  min-height: 100vh;
+}
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+.flex {
+  display: flex;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+
+/* Card container */
+.bg-white {
+  background-color: #fff;
+}
+.rounded-2xl {
+  border-radius: 1rem;
+}
+.shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+              0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.border {
+  border: 1px solid #e5e7eb;
+}
+.p-6 {
+  padding: 1.5rem;
+}
+.max-w-md {
+  max-width: 28rem;
+}
+.w-full {
+  width: 100%;
+}
+
+/* Buttons */
+button, .btn {
+  cursor: pointer;
+  border: none;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  border-radius: 1rem;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.bg-blue-600 {
+  background-color: #2563eb;
+}
+.text-white {
+  color: #fff;
+}
+.hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+}
+.disabled\:opacity-50:disabled {
+  opacity: 0.5;
+}
+
+.bg-gray-200 {
+  background-color: #e5e7eb;
+}
+.text-gray-800 {
+  color: #1f2937;
+}
+
+/* Inputs & textarea */
+input, textarea, select {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+/* Headings & text */
+h1, h2, h3, h4 {
+  margin: 0;
+}
+.text-2xl {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.text-xl {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.text-blue-600 {
+  color: #2563eb;
+}
+.text-gray-500 {
+  color: #6b7280;
+}
+.text-gray-600 {
+  color: #4b5563;
+}
+.text-gray-800 {
+  color: #1f2937;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+}
+
+/* Utility spacing */
+.mb-8 { margin-bottom: 2rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-5 { margin-top: 1.25rem; }
+.mt-6 { margin-top: 1.5rem; }
+
+/* Grid for dashboard cards */
+.grid {
+  display: grid;
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-xs {
+  font-size: 0.75rem;
+}
