@@ -36,7 +36,7 @@ export async function acceptRequest(requestId: string, beneficiaryId: string, vo
     return chat_id
 }
 
-// 3) Inbox
+// 2) Inbox
 export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
   const chat_list: ChatListItem[] = []
   // get all the requests that user is involved in
