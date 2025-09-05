@@ -28,6 +28,30 @@ export interface AcceptedRequestInfo {
 export type RequestStatus = 'open' | 'ongoing' | 'closed';
 
 export interface OpenRequestWithNames {
-  request: RequestInfo;
-  requester_name: string;
+    request: RequestInfo;
+    requester_name: string;
+}
+
+export interface DashboardRequest {
+    request_id: string,
+    type: string,
+    title: string,
+    urgency: string,
+    duration: string,
+    location: string
+}
+
+export interface PreAcceptRequest {
+    request_id: string,   
+    requester_id: string,    
+    name: string,
+    title: string,
+    type: string,
+    description: string,
+    location: string,
+    initial_meet: boolean,
+    time: string,          
+    duration: string,
+    urgency: string, 
+    created_at: Date,
 }

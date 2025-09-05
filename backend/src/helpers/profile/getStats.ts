@@ -19,7 +19,9 @@ export async function getPWDCount(): Promise<number|undefined> {
     throw error;
   }
 }
-
+/**
+ * Get number of Volunteers using the commonQueries helper
+ */
 export async function getVolunteerCount(): Promise<number|undefined> {
   try {
     const queries = db.helpers;
@@ -35,7 +37,9 @@ export async function getVolunteerCount(): Promise<number|undefined> {
     throw error;
   }
 }
-
+/**
+ * Get number of Requests using the commonQueries helper
+ */
 export async function getRequestCount(): Promise<number|undefined> {
   try {
     const queries = db.helpers;
