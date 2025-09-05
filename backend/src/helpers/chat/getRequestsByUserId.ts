@@ -21,7 +21,7 @@ export async function getRequestsByUserId(user_id: string): Promise<RequestInfo[
     // Requests where the user is a volunteer
     const result2 = await queries.getRequestByVolunteerId(user_id);
     if (!result2.success) {
-      logger.error(`Failed to fetch requests as volunteer`);
+      logger.error(`DB query failed for requests as volunteer: ${result2.error}`);
     } else if (!result2.data || result2.data.length === 0) {
       logger.debug(`No requests found for user ${user_id} as volunteer`);
     } else {

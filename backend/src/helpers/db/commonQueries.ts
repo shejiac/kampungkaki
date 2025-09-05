@@ -181,7 +181,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `SELECT * FROM kampung_kaki.t_requests WHERE requester_id = $1`;
           const result = await db.query(query, [requesterId]);
           if (!result.rows.length) {
-            return { success: false, error: 'Request not found' };
+            return { success: true, data: []  };
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
@@ -209,7 +209,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `SELECT * FROM kampung_kaki.t_requests WHERE volunteer_id = $1`;
           const result = await db.query(query, [volunteerId]);
           if (!result.rows.length) {
-            return { success: false, error: 'Request not found' };
+            return { success: true, data: []  };
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
