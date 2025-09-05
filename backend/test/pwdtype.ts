@@ -40,7 +40,6 @@ export const mockPwds: Pwd[] = [
   {
     user_id: "p5",
     user_name: "Evelyn Koh",
-    email: "evelyn.koh@example.com",
     phone_number: "+6577889900",
     // no postal_code (optional)
     home_address: "Blk 567 Hougang Ave 9 #03-10",
