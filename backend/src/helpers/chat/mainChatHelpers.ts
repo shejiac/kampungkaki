@@ -5,28 +5,27 @@ import { getRequestsByUserId } from './getRequestsByUserId'
 import logger from '../db/logger'
 import { error } from "console";
 import { getChatMessages, getLastChatMessage } from './getChatMessages'
+import { upsertAcceptedRequest } from './upsertAcceptedRequest'
+import { RequestInfo, AcceptedRequestInfo } from '../../types/request'
+import { updateStatus } from './updateStatus'
 
 
-
-
-// 4) Room bootstrap
-getThreadWithSession(
-  threadId: string,
-  userId: string // enforce membership (volunteer or beneficiary)
-): Promise<{
-  thread: { id: string, status: ThreadStatus, request_id: string, volunteer_id: string, beneficiary_id: string },
-  request: { title: string | null, location: string | null, start_time?: string | null },
-  session: SessionRow | null,
-  messages: MessageRow[]
-}>
-
-// 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary
+// 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary,
+// also upserts request as an accepted request 
 export async function acceptRequest(requestId: string, beneficiaryId: string, volunteerId: string): Promise<string>{
     const chat: Chat = {
         request_id: requestId,
         requester_id: beneficiaryId,
         volunteer_id: volunteerId
     }
+    const acceptedRequest: AcceptedRequestInfo ={
+      request_id: requestId,   
+      requester_id: beneficiaryId, 
+      volunteer_id: volunteerId,    
+      request_status: "ongoing"
+    }
+    updateStatus(requestId, "ongoing")
+    upsertAcceptedRequest(acceptedRequest)
     upsertChat(chat)
     const chat_details = await getChatDetails(requestId)
     const chat_id = chat_details.chat_id
@@ -43,7 +42,10 @@ export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
   // get all the requests that user is involved in
   const requests = await getRequestsByUserId(userId)
     for (const r of requests){
-      const chat_details = await getChatDetails(r)
+      if (!r.request_id){
+        continue
+      }
+      const chat_details = await getChatDetails(r.request_id)
       const chat_id = chat_details.chat_id
       if (!chat_id){
         continue

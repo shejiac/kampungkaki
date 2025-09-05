@@ -5,7 +5,7 @@ import { AcceptedRequestInfo } from "../../types/request";
 /**
  * Upsert an accepted request using the commonQueries helper
  */
-export async function upsertCreatedRequest(request: AcceptedRequestInfo): Promise<boolean> {
+export async function upsertAcceptedRequest(request: AcceptedRequestInfo): Promise<boolean> {
   try {
     const queries = db.helpers;
     const result = await queries.upsertAcceptedRequest(request);

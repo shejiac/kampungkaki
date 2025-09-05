@@ -25,6 +25,7 @@ export interface CommonQueries {
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
   getNumberOfVolunteers: () => Promise<DbQueryResult<number>>;
   getRequestsByStatus: (requestStatus: RequestStatus) => Promise<DbQueryResult<RequestInfo[]>>;
+  updateRequestStatus: (request_id: string, new_status: string) => Promise<DbQueryResult<void>>;
 }
 
 const commonQueries = (db: DbInterface): CommonQueries => ({
@@ -338,6 +339,25 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         return { success: true, data: result.rows as RequestInfo[] };
       } catch (error: any) {
         logger.error(`Error fetching requests with status ${status}: ${error.message}`);
+        return { success: false, error: error.message };
+      }
+    },
+    updateRequestStatus: async (request_id: string, new_status: string) => {
+      try {
+        const query = `
+          UPDATE kampung_kaki.t_requests
+          SET request_status = $2,
+              updated_at = NOW()
+          WHERE request_id = $1
+          RETURNING request_id, request_status, updated_at;
+        `;
+
+        const params = [request_id, new_status];
+        await db.query(query, params);
+        logger.success(`Updated request to status '${new_status}`);
+        return { success: true, data: undefined };
+      } catch (error: any) {
+        logger.error(`Failed to update status for request ${request_id}: ${error.message}`);
         return { success: false, error: error.message };
       }
     },
