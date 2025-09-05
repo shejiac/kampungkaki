@@ -1,6 +1,5 @@
 import db from "../db";
 import logger from "../db/logger";
-import { RequestInfo } from "../../types/request";
 
 /**
  * Upsert an accepted request using the commonQueries helper

@@ -1,18 +1,26 @@
 import {upsertChat} from './upsertChat'
-import {Chat, ChatListItem} from '../../types/chats'
+import { upsertChatMessage } from './upsertChatMessage'
+import {Chat, ChatListItem, ChatMessage} from '../../types/chats'
 import {getChatDetails} from './getChatsDetails'
 import { getRequestsByUserId } from './getRequestsByUserId'
 import logger from '../db/logger'
 import { error } from "console";
 import { getChatMessages, getLastChatMessage } from './getChatMessages'
 import { upsertAcceptedRequest } from './upsertAcceptedRequest'
-import { RequestInfo, AcceptedRequestInfo } from '../../types/request'
+import {AcceptedRequestInfo } from '../../types/request'
 import { updateStatus } from './updateStatus'
+import {getRequesterbyRequest} from './getRequesterByRequestId'
+import { getAllRequestDetails } from '../volunteer/getAllRequestDetails'
+import { getRequestbyRequester } from './getRequestByRequesterId'
+import { get, request } from 'http'
+import { getRequestbyRequestId } from './getRequestByRequestId'
+import { getAcceptedRequestbyRequestId } from './getAcceptedRequestByRequestId'
 
 
 // 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary,
 // also upserts request as an accepted request 
-export async function acceptRequest(requestId: string, beneficiaryId: string, volunteerId: string): Promise<string>{
+export async function acceptRequest(requestId: string, volunteerId: string): Promise<string>{
+    const beneficiaryId = await getRequesterbyRequest(requestId)
     const chat: Chat = {
         request_id: requestId,
         requester_id: beneficiaryId,
@@ -24,9 +32,9 @@ export async function acceptRequest(requestId: string, beneficiaryId: string, vo
       volunteer_id: volunteerId,    
       request_status: "ongoing"
     }
-    updateStatus(requestId, "ongoing")
-    upsertAcceptedRequest(acceptedRequest)
-    upsertChat(chat)
+    await updateStatus(requestId, "ongoing")
+    await upsertAcceptedRequest(acceptedRequest)
+    await upsertChat(chat)
     const chat_details = await getChatDetails(requestId)
     const chat_id = chat_details.chat_id
     if (!chat_id){
@@ -66,4 +74,72 @@ export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
       chat_list.push(chat_info)
     }
   return chat_list
+}
+
+// 3) get Chat and request details
+export async function getChat(chatId: string){
+  const chat_details = await getChatDetails(chatId)
+  const request_id = chat_details.request_id
+  const request_details = await getRequestbyRequestId(request_id)
+  const chat_messages = await getChatMessages(chatId)
+
+  return {chat_details, request_details, chat_messages}
+}
+
+// 4a) a user creates message, gets upserted to db
+export async function userCreateMessage(chatId: string, senderId: string, message: string): Promise<void> {
+  const chat_message: ChatMessage = {
+    chat_id: chatId,
+    sender_id: senderId,
+    message_type: 'user',
+    body: message
+  }
+  await upsertChatMessage(chat_message)
+}
+
+// 4b) system created message also gets upserted to db
+export async function systemCreateMessage(chatId: string, senderId: string, message: string): Promise<void> {
+  const chat_message: ChatMessage = {
+    chat_id: chatId,
+    sender_id: senderId,
+    message_type: 'system',
+    body: message
+  }
+  await upsertChatMessage(chat_message)
+}
+
+/** "6) beneficiaryConfirmChat(threadId, beneficiaryId)" does not exist theres no status for chat.
+ * the moment the request is accepted a chat should just be created
+ */
+
+/**  7) and 8) together, if request is meet first, just start timer only when beneficiary approve,
+ * if request is no meet first, just start timer when volunteer request
+ * just use this function when either of the two situations happen 
+ */
+
+export async function startTime(chat_id: string): Promise<void> {
+  const chat_details = await getChatDetails(chat_id)
+  const acceptedRequest: AcceptedRequestInfo = {
+    request_id: chat_details.request_id,
+    requester_id: chat_details.requester_id,
+    volunteer_id: chat_details.volunteer_id,
+    request_status: "ongoing",
+    request_start_time: new Date(),
+  }
+  await upsertAcceptedRequest(acceptedRequest)
+}
+
+/**  9) and 10) also together, no need to check when volunteer end, js see when beneficiary end 
+ * (beneficiary should only be able to end after volunteer end anyway)
+ */
+export async function endTime(chat_id: string): Promise<void> {
+  const chat_details = await getChatDetails(chat_id)
+  const acceptedRequest: AcceptedRequestInfo = {
+    request_id: chat_details.request_id,
+    requester_id: chat_details.requester_id,
+    volunteer_id: chat_details.volunteer_id,
+    request_status: "ongoing",
+    request_end_time: new Date()
+  }
+  await upsertAcceptedRequest(acceptedRequest)
 }
