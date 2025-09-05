@@ -1,0 +1,13 @@
+```prisma
+// ...existing code...
+
+model User {
+  id         String   @id
+  phone      String   @unique
+  name       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ...existing code...
+```

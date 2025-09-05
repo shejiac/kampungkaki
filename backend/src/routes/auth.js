@@ -2,8 +2,11 @@
 import { pool } from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 import { AUTH_REQUIRED } from '../config/firebase.js';
+import admin from '../config/firebase.js';
+import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
+const prisma = new PrismaClient();
 
 /**
  * GET /me
@@ -67,6 +70,29 @@ router.get('/health', (req, res) => {
     auth_required: AUTH_REQUIRED,
     timestamp: new Date().toISOString()
   });
+});
+
+router.post('/verify-token', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { phone_number } = decodedToken;
+
+    let user = await prisma.user.findUnique({
+      where: { phone: phone_number }
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: { phone: phone_number }
+      });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error('Auth error:', error);
+    res.status(401).json({ error: error.message });
+  }
 });
 
 export default router;

@@ -8,7 +8,7 @@ import './config/firebase.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
-// import apiRoutes from './routes/api.js';
+import userRoutes from './routes/users.js';
 
 dotenv.config();
 
@@ -22,6 +22,10 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
+// Auth routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
 // Test route
 app.get('/', (req, res) => {
   res.json({ 
@@ -30,12 +34,6 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
-// Auth routes
-app.use('/api/auth', authRoutes);
-
-// Your existing API routes
-// app.use('/api', apiRoutes);
 
 // Health check route
 app.get('/health', async (req, res) => {
@@ -96,3 +94,4 @@ app.listen(PORT, () => {
   console.log(`🔗 API URL: http://localhost:${PORT}`);
   console.log(`🔥 Firebase Auth: ${process.env.AUTH_REQUIRED !== 'false' ? 'Enabled' : 'Disabled (Dev Mode)'}`);
 });
+  console.log(`🔥 Firebase Auth: ${process.env.AUTH_REQUIRED !== 'false' ? 'Enabled' : 'Disabled (Dev Mode)'}`);
