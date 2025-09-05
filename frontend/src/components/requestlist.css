@@ -1,0 +1,291 @@
+/* Container & header (mirrors RequestForm) */
+.list-wrap {
+  max-width: 720px;
+  margin: 24px auto;
+  padding: 0 16px 24px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans";
+  color: #0a0a0a;
+}
+.list-header .subtitle {
+  font-size: 12px;
+  color: #6b7280;
+}
+.list-header .title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 4px 0 12px;
+}
+
+.app-container {
+  max-width: 960px;     /* adjust width */
+  margin: 0 auto;       /* centers horizontally */
+  padding: 2rem;        /* breathing space */
+}
+
+
+/* Filters bar */
+.filters {
+  display: grid;
+  grid-template-columns: 200px 1fr 260px;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.filters .btn {
+  justify-self: end;   /* move Refresh button to the right edge */
+}
+
+.filter { display: grid; gap: 6px; }
+.filter span { font-size: 12px; color: #6b7280; }
+.field, .filter select {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+.btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:hover { background: #f9fafb; }
+
+/* Optional: reuse the form's primary button look */
+.btn.primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.meta-item a {
+  color: #2563eb;          /* your primary blue */
+  text-decoration: none;
+  font-weight: 500;
+}
+.meta-item a:hover {
+  text-decoration: underline;
+}
+
+
+/* List + cards */
+.list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #fff;
+  padding: 14px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+.card-title { font-size: 16px; font-weight: 700; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.desc { margin: 8px 0 8px; }
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.meta-item { display: inline-flex; align-items: center; gap: 4px; }
+
+.footer { margin-top: 8px; font-size: 12px; color: #6b7280; }
+.by { white-space: nowrap; }
+
+/* Chips & badges (palette matches form) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+}
+.chip.label { background: #eef2ff; color: #3730a3; border-color: #c7d2fe; }
+.chip.low { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }       /* LOW */
+.chip.medium { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }   /* MEDIUM */
+.chip.high { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }     /* HIGH */
+
+/* Status badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.badge.OPEN    { background: #dbeafe; color: #1d4ed8; }
+.badge.ONGOING { background: #dcfce7; color: #15803d; }
+.badge.CLOSED  { background: #e5e7eb; color: #374151; }
+
+/* Empty state + errors */
+.empty {
+  border: 1px dashed #d1d5db;
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  color: #6b7280;
+  background: #fafafa;
+}
+.empty-icon { font-size: 20px; margin-bottom: 6px; }
+.empty-title { font-weight: 700; color: #111827; }
+.empty-meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.error { color: #b91c1c; }
+
+/* Loading skeletons */
+.skeleton .skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 37%,#f3f4f6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s infinite;
+  margin: 6px 0;
+}
+.skeleton .row { display: flex; gap: 10px; }
+.w-100 { width: 100%; } .w-80 { width: 80%; } .w-60 { width: 60%; } .w-28 { width: 28%; }
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .filters {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .by { white-space: normal; }
+}
+
+.chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid #e5e7eb; background:#f9fafb; }
+.chip.low { background:#ecfeff; color:#0e7490; border-color:#a5f3fc; }
+.chip.medium { background:#fff7ed; color:#c2410c; border-color:#fed7aa; }
+.chip.high { background:#fee2e2; color:#b91c1c; border-color:#fecaca; }
+.meta-item a { color:#2563eb; text-decoration:none; font-weight:500; }
+.meta-item a:hover { text-decoration:underline; }
+
+/* ========== Compact card style like the screenshot ========== */
+.list { gap: 12px; } /* a touch more air between cards */
+
+.card.card-compact {
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+/* layout: avatar | content */
+.card-compact .row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+/* round initial avatar */
+.card-compact .avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #4b5563;
+  background: #eef2ff;           /* soft indigo */
+  border: 1px solid #e5e7eb;
+}
+
+/* title + priority chip in the top row */
+.card-compact .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -2px;               /* visually align with avatar center */
+}
+.card-compact .card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* small orange "Medium" chip like the screenshot */
+.card-compact .chip.priority {
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 0;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+/* description: two-line clamp */
+.card-compact .desc {
+  margin: 6px 0 8px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #334155;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* meta row */
+.card-compact .meta {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* tiny icons beside meta text */
+.card-compact .meta .icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: -2px;
+  opacity: .8;
+}
+
+/* optional right-justified distance at the end */
+.card-compact .meta .spacer {
+  flex: 1 1 auto;
+}
+
+/* hover = very light lift */
+.card-compact:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+
+/* mobile: keep the same look, let text wrap */
+@media (max-width: 720px) {
+  .card-compact .card-head { align-items: flex-start; }
+}
+
+

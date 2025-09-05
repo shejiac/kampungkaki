@@ -3,9 +3,9 @@ const prisma = new PrismaClient();
 
 // create/draft/post request
 export const createRequest = async (req, res) => {
-  const { title, description, userId } = req.body;
+  const { title, request_description, userId } = req.body;
   const r = await prisma.request.create({
-    data: { title, description, createdBy: Number(userId) }
+    data: { title, request_description, createdBy: Number(userId) }
   });
   return res.json(r);
 };
