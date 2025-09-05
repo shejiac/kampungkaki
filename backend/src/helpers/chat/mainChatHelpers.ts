@@ -141,7 +141,7 @@ export async function endTime(chat_id: string): Promise<void> {
     request_id: chat_details.request_id,
     requester_id: chat_details.requester_id,
     volunteer_id: chat_details.volunteer_id,
-    request_status: "ongoing",
+    request_status: "closed",
     request_end_time: new Date()
   }
   await upsertAcceptedRequest(acceptedRequest)
