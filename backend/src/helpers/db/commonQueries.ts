@@ -235,7 +235,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `
             INSERT INTO kampung_kaki.t_chats (
               chat_id, request_id, requester_id, volunteer_id, created_at
-            ) VALUES ($1,$2,$3,$4,$5)
+            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5)
             ON CONFLICT (chat_id)
             DO NOTHING;
           `;

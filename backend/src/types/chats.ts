@@ -1,5 +1,5 @@
 export interface Chat {
-    chat_id: string,        
+    chat_id?: string,        
     request_id: string,     
     requester_id: string,    
     volunteer_id: string,       
