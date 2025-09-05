@@ -43,6 +43,9 @@ export async function getAllRequestDetails(): Promise<OpenRequestWithNames[]> {
   }
 }
 
+/** use this for when you are loading out the dashboard. It gives all the small details that 
+ * you can put for the listings of all the available open requests
+*/
 export async function individualRequestDetailsOnDashboard(requests: OpenRequestWithNames[]): Promise<DashboardRequest[]>{
   try {
     const requestDetailsForDashboard: DashboardRequest[] = [];

@@ -1,6 +1,6 @@
 import db from "../db";
 import logger from "../db/logger";
-import { Chat, ChatMessage } from "../../types/chats";
+import { ChatMessage } from "../../types/chats";
 
 /**
  * Upsert chat messages using the commonQueries helper
