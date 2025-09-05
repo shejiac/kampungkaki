@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -10,27 +11,24 @@ import './config/firebase.js';
 import authRoutes from './routes/auth.js';
 // import apiRoutes from './routes/api.js';
 
+=======
+﻿import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+
+>>>>>>> parent of 6e5674c (backend auth)
 dotenv.config();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Initialize Prisma Client
-const prisma = new PrismaClient();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'KampungKaki Backend API',
-    status: 'running',
-    timestamp: new Date().toISOString()
-  });
-});
+// Routes
+import authRoutes from "./routes/auth.js";
+import chatRoutes from "./routes/chat.js";
+import requestRoutes from "./routes/requests.js";
 
+<<<<<<< HEAD
 // Auth routes
 app.use('/api/auth', authRoutes);
 
@@ -89,10 +87,20 @@ process.on('SIGTERM', async () => {
   await pool.end();
   process.exit(0);
 });
+=======
+app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/requests", requestRoutes);
+>>>>>>> parent of 6e5674c (backend auth)
 
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
+<<<<<<< HEAD
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API URL: http://localhost:${PORT}`);
   console.log(`🔥 Firebase Auth: ${process.env.AUTH_REQUIRED !== 'false' ? 'Enabled' : 'Disabled (Dev Mode)'}`);
+=======
+  console.log(Server running on http://localhost:);
+>>>>>>> parent of 6e5674c (backend auth)
 });
