@@ -5,36 +5,31 @@ import { Chat } from '../src/types/chats';
 
 export const mockChats: Chat[] = [
   {
-    chat_id: "c1",
-    request_id: "r1",       // Grocery Shopping Help
+    request_id: "76002553-ed79-4068-aeb0-5d62e6a07022",       
     requester_id: "u1",     // Alice Tan (PWD)
     volunteer_id: "u5",     // Jason Tan (Volunteer)
     created_at: new Date("2025-03-01T09:00:00Z"),
   },
   {
-    chat_id: "c2",
-    request_id: "r2",       // Doctor’s Appointment Escort
+    request_id: "1e0186a0-369b-459f-8757-37b453306063",       
     requester_id: "u2",     // Benjamin Ong (PWD)
     volunteer_id: "u4",     // Sophia Lim
     created_at: new Date("2025-03-02T14:05:00Z"),
   },
   {
-    chat_id: "c3",
-    request_id: "r3",       // Change Bedsheets
+    request_id: "00ac4531-e670-46e1-8a78-b8d540cf8317",       // Change Bedsheets
     requester_id: "u3",     // Cheryl Wong
-    volunteer_id: "u3",     // Rachel Ng
+    volunteer_id: "u2",     // Rachel Ng
     created_at: new Date("2025-03-02T15:20:00Z"),
   },
   {
-    chat_id: "c4",
-    request_id: "r5",       // Help Reading Letters
+    request_id: "59c33b7b-df33-4ab6-8807-7c5c3a0c0637",       
     requester_id: "u4",     // Evelyn Koh
-    volunteer_id: "u2",     // Jason Tan
+    volunteer_id: "u3",     // Jason Tan
     created_at: new Date("2025-03-03T17:45:00Z"),
   },
   {
-    chat_id: "c5",
-    request_id: "r6",       // Pick Up Medicine
+    request_id: "763806bd-3515-4f9e-8f1a-4e15b8110b61",       
     requester_id: "u5",     // Cheryl Wong
     volunteer_id: "u1",     // Daniel Lee
     created_at: new Date("2025-03-04T10:15:00Z"),
