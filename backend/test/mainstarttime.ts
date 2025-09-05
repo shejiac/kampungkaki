@@ -5,15 +5,15 @@ import logger from "../src/helpers/db/logger";
 const cases = [
   {
     name: "Start time for grocery request chat",
-    chatId: "84e185fb-55b5-47b9-b123-1234567890ab",
+    chatId: "11111111-1111-1111-1111-111111111111",
   },
   {
     name: "Start time for TTSH escort chat",
-    chatId: "12ab34cd-56ef-78gh-90ij-0987654321zx",
+    chatId: "11111111-1111-1111-1111-111111111111",
   },
   {
     name: "Start time for bedsheets request chat",
-    chatId: "ab98cd76-54ef-32gh-10ij-abcdefabcdef",
+    chatId: "11111111-1111-1111-1111-111111111111",
   },
 ];
 

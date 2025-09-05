@@ -5,19 +5,19 @@ import logger from "../src/helpers/db/logger";
 const cases = [
   {
     name: "Send grocery chat message",
-    chatId: "a2762758-c436-43f1-b2d3-506e140b9a32",
+    chatId: "11111111-1111-1111-1111-111111111111",
     senderId: "u1",
     message: "Hi, just checking if you're still available to help?",
   },
   {
     name: "Send TTSH escort chat message",
-    chatId: "4fcb36bf-e3da-46c0-8d72-59e3c093a4ff",
+    chatId: "11111111-1111-1111-1111-111111111111",
     senderId: "u2",
     message: "Yes, I can escort you to TTSH at 3 PM.",
   },
   {
     name: "Send bedsheets request chat message",
-    chatId: "96efc31e-a006-45bf-b5ad-cb3dbf06277d",
+    chatId: "11111111-1111-1111-1111-111111111111",
     senderId: "u3",
     message: "Thanks a lot for helping with the bedsheets!",
   },

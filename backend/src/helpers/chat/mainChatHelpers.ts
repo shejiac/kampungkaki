@@ -1,7 +1,7 @@
 import {upsertChat} from './upsertChat'
 import { upsertChatMessage } from './upsertChatMessage'
 import {Chat, ChatListItem, ChatMessage} from '../../types/chats'
-import {getChatDetails} from './getChatsDetails'
+import {getChatDetailsByChatId, getChatDetailsByReqId} from './getChatsDetails'
 import { getRequestsByUserId } from './getRequestsByUserId'
 import logger from '../db/logger'
 import { error } from "console";
@@ -35,7 +35,7 @@ export async function acceptRequest(requestId: string, volunteerId: string): Pro
     await updateStatus(requestId, "ongoing")
     await upsertAcceptedRequest(acceptedRequest)
     await upsertChat(chat)
-    const chat_details = await getChatDetails(requestId)
+    const chat_details = await getChatDetailsByReqId(requestId)
     const chat_id = chat_details.chat_id
     if (!chat_id){
         logger.error(`Failed to get chat id`);
@@ -53,7 +53,7 @@ export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
       if (!r.request_id){
         continue
       }
-      const chat_details = await getChatDetails(r.request_id)
+      const chat_details = await getChatDetailsByReqId(r.request_id)
       const chat_id = chat_details.chat_id
       if (!chat_id){
         continue
@@ -81,7 +81,7 @@ export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
 
 // 3) get Chat and request details
 export async function getChat(chatId: string){
-  const chat_details = await getChatDetails(chatId)
+  const chat_details = await getChatDetailsByChatId(chatId)
   const request_id = chat_details.request_id
   const request_details = await getRequestbyRequestId(request_id)
   const chat_messages = await getChatMessages(chatId)
@@ -121,7 +121,7 @@ export async function systemCreateMessage(chatId: string, senderId: string, mess
  */
 
 export async function startTime(chat_id: string): Promise<void> {
-  const chat_details = await getChatDetails(chat_id)
+  const chat_details = await getChatDetailsByChatId(chat_id)
   const acceptedRequest: AcceptedRequestInfo = {
     request_id: chat_details.request_id,
     requester_id: chat_details.requester_id,
@@ -136,7 +136,7 @@ export async function startTime(chat_id: string): Promise<void> {
  * (beneficiary should only be able to end after volunteer end anyway)
  */
 export async function endTime(chat_id: string): Promise<void> {
-  const chat_details = await getChatDetails(chat_id)
+  const chat_details = await getChatDetailsByReqId(chat_id)
   const acceptedRequest: AcceptedRequestInfo = {
     request_id: chat_details.request_id,
     requester_id: chat_details.requester_id,
