@@ -20,6 +20,7 @@ export interface CommonQueries {
   getRequestByVolunteerId: (volunteerId: string) => Promise<DbQueryResult<RequestInfo[]>>;
   getAcceptedRequestByRequestId: (requestId: string) => Promise<DbQueryResult<AcceptedRequestInfo>>;
   getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat>>;
+  getChatsByChatId: (ChatId: string) => Promise<DbQueryResult<Chat>>;
   getMessagesByChatId: (chatId: string) => Promise<DbQueryResult<ChatMessage[]>>;
   getNumberOfRequests: () => Promise<DbQueryResult<number>>;
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
@@ -279,6 +280,17 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           return { success: true, data: result.rows[0] as Chat };
         } catch (error: any) {
           logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
+          return { success: false, error: error.message };
+        }
+      },
+
+      getChatsByChatId: async (chatId: string) => {
+        try {
+          const query = `SELECT * FROM kampung_kaki.t_chats WHERE chat_id = $1`;
+          const result = await db.query(query, [chatId]);
+          return { success: true, data: result.rows[0] as Chat };
+        } catch (error: any) {
+          logger.error(`Error fetching chats for request ${chatId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },
