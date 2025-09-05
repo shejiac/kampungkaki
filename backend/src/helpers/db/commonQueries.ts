@@ -282,7 +282,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
 
       getMessagesByChatId: async (chatId: string) => {
         try {
-          const query = `SELECT * FROM kampung_kaki.t_chats_messages WHERE chat_id = $1 ORDER BY created_at ASC`;
+          const query = `SELECT * FROM kampung_kaki.t_chats_messages WHERE chat_id = $1 ORDER BY created_at DESC`;
           const result = await db.query(query, [chatId]);
           return { success: true, data: result.rows as ChatMessage[] };
         } catch (error: any) {

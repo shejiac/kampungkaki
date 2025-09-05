@@ -18,6 +18,7 @@ export interface ChatMessage {
 export interface ChatListItem {
     chat_id: string,
     other_party_user_name: string,
-    last_message_time: string,
-    last_message: string
+    last_message?: string,
+    last_message_time?: Date,
+    last_message_sender?: string
 }
