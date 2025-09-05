@@ -1,5 +1,5 @@
 {
-  "name": "kkmobilephoneauth",
+  "name": "frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,14 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "firebase": "^12.2.1",
-    "js-cookie": "^3.0.5",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
-    "@tailwindcss/postcss": "^4.1.12",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
