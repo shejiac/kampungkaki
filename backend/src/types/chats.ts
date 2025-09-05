@@ -7,7 +7,7 @@ export interface Chat {
 }
 
 export interface ChatMessage {
-    message_id: string,   
+    message_id?: string,   
     chat_id: string,     
     sender_id?: string,    
     message_type: "user" | "system",
