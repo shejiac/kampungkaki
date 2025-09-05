@@ -1,0 +1,65 @@
+/* Make sure viewport fills */
+html, body, #root { height: 100%; margin: 0; }
+
+/* Full-viewport centering frame */
+.center-frame {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;       /* horizontal + vertical center */
+  background: #f3f4f6;       /* subtle backdrop */
+  padding: 16px;             /* keep card off screen edges on small devices */
+}
+
+/* The centered card */
+.app-card {
+  width: min(820px, 92vw);   /* narrower look */
+  height: min(80vh, 760px);  /* fixed max height */
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;    /* header + content */
+  overflow: hidden;          /* clip inner scrolling to rounded corners */
+}
+
+/* Fixed card header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+}
+
+/* Brand heading font matches app text */
+.brand {
+  font-family: inherit;   /* uses same stack as body */
+  font-weight: 700;       /* keep it bold */
+  font-size: 1.8rem;      /* slightly smaller than default h1 */
+  margin: 0;
+}
+
+/* Force all text elements to use the same font stack */
+body, input, textarea, button, select,
+h1, h2, h3, h4, h5, h6 {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+}
+
+
+
+
+/* Scrollable inside area */
+.app-content {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+/* Buttons reused */
+.btn {
+  height: 40px; padding: 0 14px;
+  border-radius: 12px; border: 1px solid #e5e7eb;
+  background: #fff; font-weight: 600; cursor: pointer;
+}
+.btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }

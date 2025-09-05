@@ -1,0 +1,208 @@
+/* Container */
+.form-wrap {
+  max-width: 420px;
+  margin: 24px auto;
+  padding: 0 16px 80px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+    "Segoe UI Emoji";
+  color: #0a0a0a;
+}
+
+/* Header with progress */
+.header {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.back {
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+.back:disabled { opacity: 0.5; cursor: default; }
+.title-block .subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+.progress {
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress .bar {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width 200ms ease;
+}
+.step-count {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Step cards */
+.step-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+.step-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+}
+
+/* Inputs */
+.row { display: grid; gap: 12px; }
+.row.two { grid-template-columns: 1fr 1fr; }
+.input label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+.input input,
+.input textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+.input textarea { min-height: 120px; resize: vertical; }
+.checkbox { display: inline-flex; gap: 8px; align-items: center; }
+
+/* Option cards (radio) */
+.options { display: grid; gap: 10px; }
+.option {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: border 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+.option:hover { border-color: #d1d5db; }
+.option input[type="radio"] { margin-top: 2px; }
+.option .opt-title { font-weight: 600; }
+.option .meta { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.option.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px #dbeafe;
+  background: #f8fbff;
+}
+
+/* Actions (sticky footer per step) */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 14px);
+  padding-top: 10px;
+}
+
+.app-container {
+  max-width: 960px;     /* adjust width */
+  margin: 0 auto;       /* centers horizontally */
+  padding: 2rem;        /* breathing space */
+}
+
+
+/* Buttons */
+.btn {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn.primary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Messages */
+.message { margin-top: 10px; color: #065f46; }
+
+/* Responsive */
+@media (max-width: 520px) {
+  .row.two { grid-template-columns: 1fr; }
+}
+
+
+/* Make sizing predictable everywhere */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Ensure card clips children (focus rings, large shadows, native widgets) */
+.step-card { overflow: hidden; }
+
+/* Prevent grid children from forcing columns wider than the card */
+.row.two { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+
+/* Inputs never exceed their parent */
+.input input,
+.input textarea { max-width: 100%; display: block; }
+
+/* Give the scrolling footer a clean edge inside rounded cards */
+.sticky-actions { border-top: 1px solid #f1f5f9; }
+
+/* More padding around the content inside the step card */
+.step-card { padding: 20px; }
+
+/* Bigger, clearer radios + checkboxes */
+.option input[type="radio"],
+.checkbox input[type="checkbox"] {
+  width: 18px;        /* 18–20px is a good target size */
+  height: 18px;
+  accent-color: #2563eb;  /* matches your primary */
+}
+
+/* If some browsers ignore width/height on form controls, force it */
+@supports not (accent-color: auto) {
+  .option input[type="radio"],
+  .checkbox input[type="checkbox"] {
+    transform: scale(1.2);
+  }
+}
+
+/* Add a tiny inner gutter so controls never hug the card edge */
+.form-wrap { padding-left: 20px; padding-right: 20px; }
+

@@ -153,8 +153,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum RequestLabel { COMPANIONSHIP SHOPPING TRANSPORTATION HOME_TASKS OTHER }
-enum RequestUrgency { LOW MEDIUM HIGH }
+enum request_type { COMPANIONSHIP SHOPPING TRANSPORTATION HOME_TASKS OTHER }
+enum request_priority { LOW MEDIUM HIGH }
 
 enum UserRole { BENEFICIARY VOLUNTEER ADMIN }
 
@@ -197,12 +197,12 @@ model Request {
   updatedAt   DateTime       @updatedAt
   creatorId   String
   creator     User           @relation("UserRequests", fields: [creatorId], references: [id])
-  label       RequestLabel
+  label       request_type
   title       String
   details     String
   whenStart   DateTime
   whenEnd     DateTime
-  urgency     RequestUrgency
+  urgency     request_priority
   lat         Float
   lng         Float
   address     String
