@@ -14,3 +14,10 @@ export interface ChatMessage {
     body: string,
     created_at?: Date
 }
+
+export interface ChatListItem {
+    chat_id: string,
+    other_party_user_name: string,
+    last_message_time: string,
+    last_message: string
+}
