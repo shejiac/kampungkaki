@@ -1,15 +1,15 @@
 import { error } from "console";
 import db from "../db";
 import logger from "../db/logger";
-import { RequestInfo } from "../../types/request";
 
 /*
- * Fetch request, given request_id
+ * Fetch requester_id, given request_id
  */
-export async function getRequestbyRequestId(request_id: string): Promise<RequestInfo> {
+export async function getRequesterbyRequest(request_id: string): Promise<string> {
   try {
     const queries = db.helpers;
 
+    // gets request details by request id 
     const requestsResult = await queries.getRequestByRequestId(request_id);
     if (!requestsResult.success) {
       logger.error(`Failed to fetch requests for requester ${request_id}`);
@@ -17,7 +17,8 @@ export async function getRequestbyRequestId(request_id: string): Promise<Request
     }
 
     const request = requestsResult.data;
-    return request
+    const requester_id = request.requester_id
+    return requester_id
   } catch (error: any) {
     logger.error(`Error fetching past requests: ${error.message}`);
     throw error;

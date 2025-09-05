@@ -1,5 +1,6 @@
 import {upsertChat} from './upsertChat'
-import {Chat, ChatListItem} from '../../types/chats'
+import { upsertChatMessage } from './upsertChatMessage'
+import {Chat, ChatListItem, ChatMessage} from '../../types/chats'
 import {getChatDetails} from './getChatsDetails'
 import { getRequestsByUserId } from './getRequestsByUserId'
 import logger from '../db/logger'
@@ -8,7 +9,11 @@ import { getChatMessages, getLastChatMessage } from './getChatMessages'
 import { upsertAcceptedRequest } from './upsertAcceptedRequest'
 import {AcceptedRequestInfo } from '../../types/request'
 import { updateStatus } from './updateStatus'
-import {getRequesterbyRequest} from './getRequestByRequestId'
+import {getRequesterbyRequest} from './getRequesterByRequestId'
+import { getAllRequestDetails } from '../volunteer/getAllRequestDetails'
+import { getRequestbyRequester } from './getRequestByRequesterId'
+import { get, request } from 'http'
+import { getRequestbyRequestId } from './getRequestByRequestId'
 
 
 // 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary,
@@ -26,9 +31,9 @@ export async function acceptRequest(requestId: string, volunteerId: string): Pro
       volunteer_id: volunteerId,    
       request_status: "ongoing"
     }
-    updateStatus(requestId, "ongoing")
-    upsertAcceptedRequest(acceptedRequest)
-    upsertChat(chat)
+    await updateStatus(requestId, "ongoing")
+    await upsertAcceptedRequest(acceptedRequest)
+    await upsertChat(chat)
     const chat_details = await getChatDetails(requestId)
     const chat_id = chat_details.chat_id
     if (!chat_id){
@@ -69,3 +74,36 @@ export async function listChatForUser(userId: string): Promise<ChatListItem[]>{
     }
   return chat_list
 }
+
+// 3) get Chat and request details
+export async function getChat(chatId: string) {
+  const chat_details = await getChatDetails(chatId)
+  const request_id = chat_details.request_id
+  const request_details = await getRequestbyRequestId(request_id)
+  const chat_messages = await getChatMessages(chatId)
+
+  return {chat_details, request_details, chat_messages}
+}
+
+// 4a) a user creates message, gets upserted to db
+export async function userCreateMessage(chatId: string, senderId: string, message: string) {
+  const chat_message: ChatMessage = {
+    chat_id: chatId,
+    sender_id: senderId,
+    message_type: 'user',
+    body: message
+  }
+  await upsertChatMessage(chat_message)
+}
+
+// 4b) system created message also gets upserted to db
+export async function systemCreateMessage(chatId: string, senderId: string, message: string) {
+  const chat_message: ChatMessage = {
+    chat_id: chatId,
+    sender_id: senderId,
+    message_type: 'system',
+    body: message
+  }
+  await upsertChatMessage(chat_message)
+}
+
