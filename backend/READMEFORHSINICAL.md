@@ -26,4 +26,4 @@ then go to backend/test/mockRequests.ts and run
 
 NOW YOUR DB IS POPULATED WITH SOME INFO 
 
-go to backend/src/helpers/volunteer or backend/src/helpers/chat to use relevant functions 
+go to backend/src/helpers/volunteer/getAllRequestDetails.ts or backend/src/helpers/chat/mainHelperFunctions.ts to use relevant functions 
