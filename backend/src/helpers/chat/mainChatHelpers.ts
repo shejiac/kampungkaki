@@ -19,7 +19,7 @@ getThreadWithSession(
 }>
 
 // 1) Accept Request. When accepted request, creates chat that pairs volunteer and beneficiary
-export async function acceptRequest(requestId, beneficiaryId, volunteerId): Promise<string>{
+export async function acceptRequest(requestId: string, beneficiaryId: string, volunteerId: string): Promise<string>{
     const chat: Chat = {
         request_id: requestId,
         requester_id: beneficiaryId,
@@ -37,5 +37,5 @@ export async function acceptRequest(requestId, beneficiaryId, volunteerId): Prom
 
 // 3) Inbox
 export async function listChatForUser(userId: string): Promise<ThreadListItem[]>{
-  
+
 }
