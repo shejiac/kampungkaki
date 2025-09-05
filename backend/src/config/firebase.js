@@ -22,6 +22,29 @@ function initFirebaseAdmin() {
       console.log('✅ Firebase Admin initialized (base64)');
       return;
     }
+
+    const pid = process.env.FIREBASE_PROJECT_ID;
+    const email = process.env.FIREBASE_CLIENT_EMAIL;
+    let key = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (pid && email && key) {
+      // handle \n escape sequences and possible surrounding quotes
+      if (key.startsWith('"') && key.endsWith('"')) {
+        key = key.slice(1, -1);
+      }
+      key = key.replace(/\\n/g, '\n');
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          project_id: pid,
+          client_email: email,
+          private_key: key,
+        }),
+      });
+      console.log('✅ Firebase Admin initialized (separate env vars)');
+      return;
+    }
+
     throw new Error('No Firebase Admin credentials found in env');
   } catch (err) {
     console.error('❌ Firebase Admin init failed:', err?.message || err);
