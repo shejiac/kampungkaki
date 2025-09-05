@@ -19,7 +19,7 @@ export interface CommonQueries {
   getRequestByRequestId: (requestId: string) => Promise<DbQueryResult<RequestInfo>>;
   getRequestByVolunteerId: (volunteerId: string) => Promise<DbQueryResult<RequestInfo[]>>;
   getAcceptedRequestByRequestId: (requestId: string) => Promise<DbQueryResult<AcceptedRequestInfo>>;
-  getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat[]>>;
+  getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat>>;
   getMessagesByChatId: (chatId: string) => Promise<DbQueryResult<ChatMessage[]>>;
   getNumberOfRequests: () => Promise<DbQueryResult<number>>;
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
@@ -256,7 +256,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
             INSERT INTO kampung_kaki.t_chats_messages (
               message_id, chat_id, sender_id, message_type, body, created_at
             ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5,$6)
-            ON CONFLICT (id)
+            ON CONFLICT (message_id)
             DO NOTHING;
           `;
           const params = [message_id, chat_id, sender_id ?? null, message_type, body, created_at ?? null];
@@ -273,7 +273,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         try {
           const query = `SELECT * FROM kampung_kaki.t_chats WHERE request_id = $1`;
           const result = await db.query(query, [requestId]);
-          return { success: true, data: result.rows as Chat[] };
+          return { success: true, data: result.rows[0] as Chat };
         } catch (error: any) {
           logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
