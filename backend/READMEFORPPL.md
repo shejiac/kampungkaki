@@ -9,12 +9,12 @@ go to backend/scripts/dbSetup.ts and run
    "npx ts-node backend/scripts/dbSetup.ts"
 
 FILL IN USER TABLE 
-then go to backend/test/usertype.ts and run
-    "npx ts-node backend/test/usertype.ts" 
+then go to backend/test/mockUsers.ts and run
+    "npx ts-node backend/test/mockUsers.ts" 
 
 FILL IN REQUEST TABLE (CAN DO IF U WANT NOT NECESSARY I THINK)
-then go to backend/test/reqinfotype.ts and run
-    "npx ts-node backend/test/reqinfotype.ts"
+then go to backend/test/mockRequests.ts and run
+    "npx ts-node backend/test/mockRequests.ts"
 
 NOW YOUR DB IS POPULATED WITH SOME INFO 
 

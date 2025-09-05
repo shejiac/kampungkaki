@@ -1,6 +1,6 @@
 ﻿# kampungkaki
 
-Backend: Node.js + Express + Prisma + PostgreSQL  
+Backend: Node.js + Express + PostgreSQL  
 Frontend: (to be added)
 
 ## Quick start
