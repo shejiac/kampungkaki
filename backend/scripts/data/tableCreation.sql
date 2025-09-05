@@ -34,11 +34,11 @@ CREATE TABLE IF NOT EXISTS kampung_kaki.t_requests (
 
 -- Accepted requests table
 CREATE TABLE IF NOT EXISTS kampung_kaki.t_accepted_requests (
-    request_id UUID NOT NULL,
+    request_id UUID PRIMARY KEY,
     requester_id VARCHAR(128) NOT NULL,
     volunteer_id VARCHAR(128),
-    request_start_time TIMESTAMP 
-    request_end_time TIMESTAMP 
+    request_start_time TIMESTAMP,
+    request_end_time TIMESTAMP,
     request_total_time INTERVAL,
     request_status TEXT,
     CONSTRAINT fk_request_accepted FOREIGN KEY (request_id) REFERENCES kampung_kaki.t_requests(request_id) ON DELETE CASCADE,
