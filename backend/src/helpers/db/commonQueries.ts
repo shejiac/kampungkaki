@@ -19,12 +19,13 @@ export interface CommonQueries {
   getRequestByRequestId: (requestId: string) => Promise<DbQueryResult<RequestInfo>>;
   getRequestByVolunteerId: (volunteerId: string) => Promise<DbQueryResult<RequestInfo[]>>;
   getAcceptedRequestByRequestId: (requestId: string) => Promise<DbQueryResult<AcceptedRequestInfo>>;
-  getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat[]>>;
+  getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat>>;
   getMessagesByChatId: (chatId: string) => Promise<DbQueryResult<ChatMessage[]>>;
   getNumberOfRequests: () => Promise<DbQueryResult<number>>;
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
   getNumberOfVolunteers: () => Promise<DbQueryResult<number>>;
   getRequestsByStatus: (requestStatus: RequestStatus) => Promise<DbQueryResult<RequestInfo[]>>;
+  updateRequestStatus: (request_id: string, new_status: string) => Promise<DbQueryResult<void>>;
 }
 
 const commonQueries = (db: DbInterface): CommonQueries => ({
@@ -235,7 +236,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `
             INSERT INTO kampung_kaki.t_chats (
               chat_id, request_id, requester_id, volunteer_id, created_at
-            ) VALUES ($1,$2,$3,$4,$5)
+            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5)
             ON CONFLICT (chat_id)
             DO NOTHING;
           `;
@@ -254,9 +255,9 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const { message_id, chat_id, sender_id, message_type, body, created_at } = msg;
           const query = `
             INSERT INTO kampung_kaki.t_chats_messages (
-              id, chat_id, sender_id, message_type, body, created_at
-            ) VALUES ($1,$2,$3,$4,$5,$6)
-            ON CONFLICT (id)
+              message_id, chat_id, sender_id, message_type, body, created_at
+            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5,$6)
+            ON CONFLICT (message_id)
             DO NOTHING;
           `;
           const params = [message_id, chat_id, sender_id ?? null, message_type, body, created_at ?? null];
@@ -273,7 +274,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         try {
           const query = `SELECT * FROM kampung_kaki.t_chats WHERE request_id = $1`;
           const result = await db.query(query, [requestId]);
-          return { success: true, data: result.rows as Chat[] };
+          return { success: true, data: result.rows[0] as Chat };
         } catch (error: any) {
           logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
@@ -282,7 +283,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
 
       getMessagesByChatId: async (chatId: string) => {
         try {
-          const query = `SELECT * FROM kampung_kaki.t_chats_messages WHERE chat_id = $1 ORDER BY created_at ASC`;
+          const query = `SELECT * FROM kampung_kaki.t_chats_messages WHERE chat_id = $1 ORDER BY created_at DESC`;
           const result = await db.query(query, [chatId]);
           return { success: true, data: result.rows as ChatMessage[] };
         } catch (error: any) {
@@ -338,6 +339,25 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
         return { success: true, data: result.rows as RequestInfo[] };
       } catch (error: any) {
         logger.error(`Error fetching requests with status ${status}: ${error.message}`);
+        return { success: false, error: error.message };
+      }
+    },
+    updateRequestStatus: async (request_id: string, new_status: string) => {
+      try {
+        const query = `
+          UPDATE kampung_kaki.t_requests
+          SET request_status = $2,
+              updated_at = NOW()
+          WHERE request_id = $1
+          RETURNING request_id, request_status, updated_at;
+        `;
+
+        const params = [request_id, new_status];
+        await db.query(query, params);
+        logger.success(`Updated request to status '${new_status}`);
+        return { success: true, data: undefined };
+      } catch (error: any) {
+        logger.error(`Failed to update status for request ${request_id}: ${error.message}`);
         return { success: false, error: error.message };
       }
     },

@@ -4,81 +4,48 @@ import { upsertChatMessage } from '../src/helpers/chat/upsertChatMessage';
 export const mockChatMessages: ChatMessage[] = [
 
   {
-    message_id: "m1",
-    chat_id: "c1",
-    sender_id: "u1", // Alice Tan (PWD)
+    chat_id: "6018722c-be5a-46a2-a64b-0625986c7caa",
+    sender_id: "u1", 
     message_type: "user",
     body: "Hi Jason, thanks for volunteering to help with groceries!",
     created_at: new Date("2025-03-01T09:05:00Z"),
   },
   {
-    message_id: "m2",
-    chat_id: "c1",
-    sender_id: "u2", // Jason Tan (Volunteer)
+    chat_id: "2377b116-f2e0-44cc-b866-3ea0c182b277",
+    sender_id: "u5", 
     message_type: "user",
     body: "Hi Alice, no problem! What time should I meet you?",
     created_at: new Date("2025-03-01T09:07:00Z"),
   },
   {
-    message_id: "m3",
-    chat_id: "c1",
+    chat_id: "30772e1a-9049-452b-9b10-bafe8f0448ef",
+    sender_id: "u3",
     message_type: "system",
     body: "Jason Tan has accepted the request Grocery Shopping Help.",
     created_at: new Date("2025-03-01T09:10:00Z"),
   },
 
-  // Chat c2: Benjamin ↔ Sophia
   {
-    message_id: "m4",
-    chat_id: "c2",
-    sender_id: "u3",
+    chat_id: "7c8cdb94-0f80-41be-9629-5515afa466e2",
+    sender_id: "u4",
     message_type: "user",
     body: "Could you accompany me to TTSH on Thursday?",
     created_at: new Date("2025-03-02T14:06:00Z"),
   },
   {
-    message_id: "m5",
-    chat_id: "c2",
-    sender_id: "u4",
+    chat_id: "4fcb36bf-e3da-46c0-8d72-59e3c093a4ff",
+    sender_id: "u2",
     message_type: "user",
     body: "Yes, I’ll be free then. What time is your appointment?",
     created_at: new Date("2025-03-02T14:08:00Z"),
   },
 
-  // Chat c3: Cheryl ↔ Rachel
   {
-    message_id: "m6",
-    chat_id: "c3",
+    chat_id: "2377b116-f2e0-44cc-b866-3ea0c182b277",
     sender_id: "u5",
     message_type: "user",
     body: "Hi Rachel, can you help me change my bedsheets tomorrow?",
     created_at: new Date("2025-03-02T15:22:00Z"),
-  },
-  {
-    message_id: "m7",
-    chat_id: "c3",
-    sender_id: "u3",
-    message_type: "user",
-    body: "Of course! What time works best for you?",
-    created_at: new Date("2025-03-02T15:25:00Z"),
-  },
-
-  // Chat c5: Cheryl ↔ Daniel
-  {
-    message_id: "m8",
-    chat_id: "c5",
-    sender_id: "u2",
-    message_type: "user",
-    body: "Daniel, could you pick up my prescription this Friday?",
-    created_at: new Date("2025-03-04T10:16:00Z"),
-  },
-  {
-    message_id: "m9",
-    chat_id: "c5",
-    sender_id: "u1",
-    message_type: "user",
-    body: "Yes, I’ll collect it in the afternoon.",
-    created_at: new Date("2025-03-04T10:20:00Z"),
   },
 ];
 
