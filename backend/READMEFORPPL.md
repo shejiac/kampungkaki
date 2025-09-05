@@ -1,6 +1,14 @@
-first i need you to have your postgres ready i dont know how you planning to acess it but yea 
-
+download postgres
+download DBEAVER
+complete all fields it prompts you with "postgres"
+make a file .env
 FILL IN YOUR .ENV FILE WITH YOUR POSTGRES DETAILS
+    DB_USER="postgres"
+    DB_HOST="localhost"
+    DB_NAME="postgres"
+    DB_PASSWORD="postgres"
+    DB_PORT="5432"
+
 IMPORT ALL IMPT STUFF 
     "npm install"
 
