@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./requestlist.css";
+import { API } from "../api";
 
-const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
 // case-insensitive equals
 const eq = (a, b) => String(a || "").toUpperCase() === String(b || "").toUpperCase();
 

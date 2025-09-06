@@ -1,0 +1,40 @@
+/* Clean, minimal underline tabs */
+.kk-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px 12px 12px;
+    justify-content: space-around;
+  }
+  
+  .kk-tab {
+    position: relative;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    padding: 10px 0;
+    color: #6B7280;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .kk-tab:focus { outline: none; }
+  
+  .kk-tab--active {
+    color: #2563EB;
+    font-weight: 700;
+  }
+  
+  /* The thin underline you showed in your example */
+  .kk-tab--active::after {
+    content: "";
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: -6px;
+    height: 2px;
+    background: #2563EB;
+    border-radius: 1px;
+  }
+  
+  /* Optional: grey out unavailable tabs (e.g., My Requests when not beneficiary) */
+  .kk-tab--muted { color: #9CA3AF; opacity: .6; pointer-events: auto; }
+  

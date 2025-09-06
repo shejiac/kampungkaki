@@ -1,5 +1,6 @@
 // Tiny API client used by App.jsx
 const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
+export { API };
 
 /** GET /api/users/me?phone=... -> { phone, fullName, age, address, avatarUrl? } or 204 */
 export async function getMe(phone) {

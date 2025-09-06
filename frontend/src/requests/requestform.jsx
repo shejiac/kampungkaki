@@ -51,7 +51,7 @@ export default function RequestForm({ onSuccess, onCancel }) {
     }
     try {
       setSaving(true);
-      const resp = await fetch("http://localhost:5000/api/requests", {
+      const resp = await fetch(`${API}/api/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

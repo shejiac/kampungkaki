@@ -4,8 +4,9 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
+    "dev": "nodemon --watch src --ext ts,js --exec ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc -p .",
     "start:prod": "NODE_ENV=production node src/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -14,12 +15,15 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }

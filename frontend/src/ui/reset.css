@@ -1,0 +1,41 @@
+/* Scope all overrides under .kk-root so PWD styles can't leak in */
+.kk-root {
+    font-family: system-ui;
+    color: #111827;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  
+  /* Kill any decorative borders/curves from global styles */
+  .kk-root h1,
+  .kk-root h2,
+  .kk-root .brand,
+  .kk-root .title {
+    color: #111827 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  /* Buttons inside the phone app should be neutral by default */
+  .kk-root button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+  }
+  
+  /* Containers */
+  .kk-phone-pad { padding: 0 12px 16px 12px; }
+  
+  /* Tiny stat cards (unchanged look) */
+  .kk-stat {
+    flex: 1;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  

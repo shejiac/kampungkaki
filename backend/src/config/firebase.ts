@@ -1,4 +1,42 @@
-import 'dotenv/config';
+// backend/src/config/firebase.ts
+// Toggle-able Firebase Admin init. Won't import firebase-admin if AUTH_REQUIRED=false.
+
+export const AUTH_REQUIRED = process.env.AUTH_REQUIRED !== 'false';
+
+let admin: any = null;
+
+if (AUTH_REQUIRED) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    admin = require('firebase-admin');
+
+    // Prefer env var with JSON; otherwise use ADC if set (GOOGLE_APPLICATION_CREDENTIALS)
+    const svc = process.env.FIREBASE_SERVICE_ACCOUNT
+      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+      : null;
+
+    if (!admin.apps.length) {
+      admin.initializeApp(
+        svc
+          ? { credential: admin.credential.cert(svc) }
+          : { credential: admin.credential.applicationDefault() }
+      );
+    }
+
+    console.log('[firebase] admin initialized');
+  } catch (e) {
+    console.error('[firebase] init failed:', e);
+    // If you want hard fail, rethrow. Otherwise, set AUTH_REQUIRED=false in .env to bypass.
+    throw e;
+  }
+} else {
+  console.log('[firebase] AUTH_REQUIRED=false → skipping admin init');
+}
+
+export { admin };
+
+
+/*import 'dotenv/config';
 import admin from 'firebase-admin';
 
 const {
@@ -38,3 +76,4 @@ const auth = admin.auth();
 const db = admin.firestore?.();
 
 export { admin, auth, db };
+*/
