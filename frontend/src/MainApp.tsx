@@ -1,26 +1,58 @@
 // src/MainApp.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { API } from './api'
 import Messages from './chat/MessagesTab'
 import RequestsTab from './tabs/RequestsTab'
 import SearchTab from './tabs/SearchTab'
+import HistoryTab from './tabs/HistoryTab' 
 
 import './ui/reset.css'
 import './ui/tabs.css'
 
+type User = {
+  id: string
+  pwd: boolean        // beneficiary (can create requests)
+  volunteer: boolean  // volunteer (can accept “I’ll Help!”)
+}
+
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001' // seeded user you’ve been using
+
 export default function MainApp() {
-  // tabs
   const [tab, setTab] = useState<'search'|'messages'|'history'|'myrequests'>('search')
-
-  // user: id + independent abilities (pwd = can request, volunteer = can help)
-  const [user, setUser] = useState<{ id: string; pwd: boolean; volunteer: boolean }>({
-    id: '00000000-0000-0000-0000-000000000001',
-    pwd: true,          // beneficiary
-    volunteer: true,    // can help (toggleable)
+  const [user, setUser] = useState<User>(() => {
+    // restore from localStorage if available (nice for teammates)
+    const saved = localStorage.getItem('kk_user')
+    if (saved) {
+      try { return JSON.parse(saved) as User } catch {}
+    }
+    return { id: DEMO_USER_ID, pwd: true, volunteer: true }
   })
-
-  // messages open state
   const [preopenThreadId, setPreopenThreadId] = useState<string|null>(null)
   const [rerenderKey, setRerenderKey] = useState(0)
+
+  // persist dev user locally so teammates don’t need to type anything
+  useEffect(() => { localStorage.setItem('kk_user', JSON.stringify(user)) }, [user])
+
+  // ---- live stats for the animated row ----
+  const [stats, setStats] = useState({ volunteers: 0, requests: 0, helped: 0 })
+  useEffect(() => {
+    let alive = true
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/stats`)
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        const d = await r.json()
+        if (alive) setStats({
+          volunteers: Number(d?.volunteers) || 0,
+          requests:   Number(d?.requests)   || 0,
+          helped:     Number(d?.helped)     || 0,
+        })
+      } catch {}
+    }
+    load()
+    const t = setInterval(load, 30000)
+    return () => { alive = false; clearInterval(t) }
+  }, [])
 
   function openMessagesWith(requestId: string) {
     setPreopenThreadId(requestId)
@@ -30,22 +62,26 @@ export default function MainApp() {
   const isMessages = tab === 'messages'
 
   return (
-    <div className="kk-root" style={{ fontFamily:'system-ui', maxWidth:480, margin:'0 auto' }}>
-      {/* Header */}
-      <header style={{ padding:'16px 16px 8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+    <div className="kk-root">
+      {/* Header (light) */}
+      <header style={{ padding: '16px 16px 8px 16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:48, height:48, borderRadius:'50%', background:'#EEF2FF',
-                        display:'grid', placeItems:'center', color:'#3B82F6', fontWeight:600 }}>
+          <div style={{ width:48, height:48, borderRadius:'50%', background:'#EEF2FF', display:'grid', placeItems:'center', color:'#3B82F6', fontWeight:600 }}>
             <span style={{ fontSize:22 }}>👤</span>
           </div>
           <div style={{ color:'#1D4ED8', fontWeight:700, fontSize:18 }}>KampungKaki</div>
         </div>
       </header>
 
-      {/* Animated stats row */}
-      <AnimatedStatsRow hidden={isMessages} />
+      {/* Animated stats row (light, clean) */}
+      <AnimatedStatsRow
+        hidden={isMessages}
+        volunteers={stats.volunteers}
+        requests={stats.requests}
+        helped={stats.helped}
+      />
 
-      {/* Tabs */}
+      {/* Tabs (CLEAN underline) */}
       <nav className="kk-tabs">
         <button
           className={`kk-tab ${tab==='myrequests' ? 'kk-tab--active' : user.pwd ? '' : 'kk-tab--muted'}`}
@@ -80,7 +116,7 @@ export default function MainApp() {
         {tab === 'search' && (
           <SearchTab
             userId={user.id}
-            isVolunteer={user.volunteer}         // <- only volunteers see “I’ll Help!”
+            isVolunteer={user.volunteer}  // ONLY volunteers see “I’ll Help!”
             onAccepted={openMessagesWith}
           />
         )}
@@ -88,7 +124,7 @@ export default function MainApp() {
         {tab === 'messages' && (
           <Messages
             key={rerenderKey}
-            user={{ id: user.id, pwd: user.pwd }}  // Messages only needs id + pwd
+            user={{ id: user.id, pwd: user.pwd }} // Messages only needs id + pwd
             preopenThreadId={preopenThreadId}
             ui="light-mobile"
             onOpenThread={setPreopenThreadId}
@@ -97,61 +133,49 @@ export default function MainApp() {
         )}
 
         {tab === 'myrequests' && (
-          user.pwd ? (
-            <RequestsTab />                       // <- beneficiaries can create requests
-          ) : (
-            <div style={{ color:'#ef4444', textAlign:'center', padding:'40px 0' }}>
-              You’re not eligible to create requests
-            </div>
-          )
+          user.pwd
+            ? <RequestsTab requesterId={user.id} />
+            : <div style={{ color:'#ef4444', textAlign:'center', padding:'40px 0' }}>
+                You’re not eligible to create requests
+              </div>
         )}
 
         {tab === 'history' && (
-          <div style={{ color:'#6B7280', textAlign:'center', padding:'40px 0' }}>
-            History coming soon…
-          </div>
+          <HistoryTab userId={user.id} />
         )}
       </main>
 
-      {/* Footer controls: role toggles + user id input */}
-      <footer style={{ display:'flex', flexWrap:'wrap', gap:10, justifyContent:'center',
-                       padding:'8px 0 24px', borderTop:'1px solid #eef2ff' }}>
-        <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
-          Beneficiary (can request):
-          <input
-            type="checkbox"
-            checked={user.pwd}
-            onChange={e => setUser(u => ({ ...u, pwd: e.target.checked }))}
-            title="Toggle beneficiary ability"
-          />
-        </label>
-
-        <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
-          Volunteer (can help):
-          <input
-            type="checkbox"
-            checked={user.volunteer}
-            onChange={e => setUser(u => ({ ...u, volunteer: e.target.checked }))}
-            title="Toggle volunteer ability"
-          />
-        </label>
-
-        <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
-          User ID:
-          <input
-            value={user.id}
-            onChange={e => setUser(u => ({ ...u, id: e.target.value }))}
-            style={{ fontSize:12, padding:'4px 6px', borderRadius:8, border:'1px solid #e5e7eb', width:260 }}
-            title="Change current user id"
-          />
-        </label>
-      </footer>
+      {/* Dev controls (compact) */}
+      <details style={{ margin:'16px 0', padding:'8px 12px' }}>
+        <summary style={{ cursor:'pointer', color:'#6B7280' }}>Dev controls</summary>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:12, marginTop:8 }}>
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
+            Beneficiary (can request)
+            <input type="checkbox" checked={user.pwd} onChange={e => setUser(u => ({ ...u, pwd: e.target.checked }))} />
+          </label>
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
+            Volunteer (can help)
+            <input type="checkbox" checked={user.volunteer} onChange={e => setUser(u => ({ ...u, volunteer: e.target.checked }))} />
+          </label>
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#6b7280' }}>
+            User ID
+            <input
+              value={user.id}
+              onChange={e => setUser(u => ({ ...u, id: e.target.value }))}
+              style={{ fontSize:12, padding:'4px 6px', borderRadius:8, border:'1px solid #e5e7eb', width:320 }}
+              title="Change current user id"
+            />
+          </label>
+        </div>
+      </details>
     </div>
   )
 }
 
-/** --------- tiny UI bits (unchanged style) ---------- */
-function AnimatedStatsRow({ hidden }:{ hidden:boolean }) {
+/** ---------- UI bits ---------- **/
+function AnimatedStatsRow({
+  hidden, volunteers, requests, helped
+}:{ hidden:boolean; volunteers:number; requests:number; helped:number }) {
   return (
     <div
       style={{
@@ -164,13 +188,14 @@ function AnimatedStatsRow({ hidden }:{ hidden:boolean }) {
       }}
     >
       <div style={{ display:'flex', gap:12 }}>
-        <Stat label="Volunteers" value={0}/>
-        <Stat label="Requests" value={0}/>
-        <Stat label="Helped" value={0}/>
+        <Stat label="Volunteers" value={volunteers}/>
+        <Stat label="Requests" value={requests}/>
+        <Stat label="Helped" value={helped}/>
       </div>
     </div>
   )
 }
+
 function Stat({label, value}:{label:string; value:number}) {
   return (
     <div style={{

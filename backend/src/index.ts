@@ -2,13 +2,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import "dotenv/config";
-<<<<<<< Updated upstream
-// at the top of src/index.ts
 import { randomUUID } from "node:crypto"; // or: from "crypto"
 
-=======
-import { randomUUID } from 'crypto'
->>>>>>> Stashed changes
 
 // controllers you already have
 import {
@@ -16,6 +11,14 @@ import {
   viewRequests,
   acceptRequest,
 } from "./controllers/pwdRequestController";
+
+// history + stats helpers
+import { getAllPastRequests } from "./helpers/pwd/getAllPreviousRequests"; 
+import {
+  getPWDCount,
+  getVolunteerCount,
+  getRequestCount,
+} from "./helpers/profile/getStats"; 
 
 // DB pool for health checks & shutdown
 import { pool } from "./config/database";
@@ -256,6 +259,71 @@ app.post("/api/events/:threadId/approve-end", async (req: Request, res: Response
     res.json({ ok: true });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || "approve_end_failed" });
+  }
+});
+
+// ---------- stats (for AnimatedStatsRow) ----------
+app.get("/api/stats", async (_req: Request, res: Response) => {
+  try {
+    const [pwd, vol, reqs] = await Promise.all([
+      getPWDCount().catch(() => 0),
+      getVolunteerCount().catch(() => 0),
+      getRequestCount().catch(() => 0),
+    ]);
+
+    // "helped" is not directly in your helper; if you track completed requests, reuse reqs or compute separately.
+    res.json({
+      volunteers: vol ?? 0,
+      requests: reqs ?? 0,
+      helped: (reqs ?? 0), // or another counter if you have one
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "stats_failed" });
+  }
+});
+
+// ---------- history (completed / previous requests for a user) ----------
+app.get("/api/history", async (req: Request, res: Response) => {
+  try {
+    const userId = req.header("X-User-Id");
+    if (!userId) return res.status(401).json({ error: "Missing X-User-Id" });
+
+    // Most implementations take userId. If your helper returns *all* rows,
+    // just filter locally by requester/volunteer === userId (kept below anyway).
+    const rows: any[] = await getAllPastRequests(userId);
+
+    const items = (rows || []).map((r) => {
+      const id =
+        r.request_id ??
+        r.id ??
+        r.chat_id ??
+        String(Math.random()); // last-ditch fallback
+
+      const title = r.title ?? r.request_title ?? "Request";
+      const description = r.description ?? r.request_description ?? null;
+
+      const location =
+        r.request_location ?? r.location ?? r.address ?? null;
+
+      const endedAt =
+        r.request_end_time ??
+        r.completed_at ??
+        r.ended_at ??
+        null;
+
+      const role =
+        userId === r.requester_id
+          ? "beneficiary"
+          : userId === r.volunteer_id
+          ? "volunteer"
+          : "other";
+
+      return { id, title, description, location, endedAt, role };
+    });
+
+    res.json({ items });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "history_failed" });
   }
 });
 

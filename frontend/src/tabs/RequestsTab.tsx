@@ -1,19 +1,45 @@
-import { useState } from "react";
-import RequestList from "../requests/RequestList.jsx";
+import React, { useState } from "react";
 import RequestForm from "../requests/requestform.jsx";
+import RequestList from "../requests/RequestList.jsx";
 
-import "../requests/requestlist.css";
-import "../requests/requestform.css";
-import "../requests/pwdIndex.css";
+type Props = {
+  requesterId?: string;
+  embed?: boolean;
+  onCreate?: () => void; // this is for RequestsTab's own callback (optional)
+};
 
-export default function RequestsTab() {
+export default function RequestsTab({ requesterId, embed = true, onCreate }: Props) {
   const [view, setView] = useState<"list" | "form">("list");
+
   return (
     <div>
       {view === "list" ? (
-        <RequestList embed onCreate={() => setView("form")} />
+        <>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <h2 style={{ fontWeight: 700 }}>My Requests</h2>
+            <button className="btn primary" onClick={() => setView("form")}>
+              Create request
+            </button>
+          </div>
+
+          {/* ✅ give RequestList the required onCreate prop */}
+          <RequestList
+            embed={embed}
+            onCreate={() => {
+              // no-op or open the form / refresh
+              // setView("form")
+            }}
+          />
+        </>
       ) : (
-        <RequestForm onSuccess={() => setView("list")} onCancel={() => setView("list")} />
+        <RequestForm
+          requesterId={requesterId || ""}
+          onSuccess={() => {
+            setView("list");
+            onCreate?.();
+          }}
+          onCancel={() => setView("list")}
+        />
       )}
     </div>
   );
