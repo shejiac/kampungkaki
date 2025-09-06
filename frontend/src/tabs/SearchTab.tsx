@@ -175,7 +175,10 @@ export default function SearchTab({
 
               {isVolunteer ? (
                 <button
-                  onClick={() => accept(it.request_id)}
+                  onClick={() => {
+  console.log("Request ID:", it.request_id);
+  accept(it.request_id);
+}}
                   style={{
                     width: "100%",
                     padding: 12,

@@ -30,9 +30,9 @@ export async function acceptRequest(requestId: string, volunteerId: string): Pro
       request_id: requestId,   
       requester_id: beneficiaryId, 
       volunteer_id: volunteerId,    
-      request_status: "ongoing"
+      request_status: "Ongoing"
     }
-    await updateStatus(requestId, "ongoing")
+    await updateStatus(requestId, "Ongoing")
     await upsertAcceptedRequest(acceptedRequest)
     await upsertChat(chat)
     const chat_details = await getChatDetailsByReqId(requestId)
@@ -126,7 +126,7 @@ export async function startTime(chat_id: string): Promise<void> {
     request_id: chat_details.request_id,
     requester_id: chat_details.requester_id,
     volunteer_id: chat_details.volunteer_id,
-    request_status: "ongoing",
+    request_status: "Ongoing",
     request_start_time: new Date(),
   }
   await upsertAcceptedRequest(acceptedRequest)
@@ -141,7 +141,7 @@ export async function endTime(chat_id: string): Promise<void> {
     request_id: chat_details.request_id,
     requester_id: chat_details.requester_id,
     volunteer_id: chat_details.volunteer_id,
-    request_status: "closed",
+    request_status: "Closed",
     request_end_time: new Date()
   }
   await upsertAcceptedRequest(acceptedRequest)
