@@ -113,39 +113,41 @@ export const createRequest = async (req: Request, res: Response) => {
 };
 
 // ------------------- GET /api/requests --------------------
+import { getAllRequestDetails, individualRequestDetailsOnDashboard } from '../helpers/volunteer/getAllRequestDetails';
+
 export const viewRequests = async (req: Request, res: Response) => {
   try {
-    const userId = String((req.query.userId as string) || DEFAULT_USER_ID);
     const q = String((req.query.q as string) || "").trim().toLowerCase();
     const statusQuery = String((req.query.status as string) || "").trim();
 
-    let list = (await getAllPastRequests(userId)) as RequestInfo[];
+    // 1️⃣ get all open requests
+    let requests = await getAllRequestDetails();
 
+    // 2️⃣ optionally filter by search term
     if (q) {
-      list = list.filter(
-        (r) =>
-          (r.request_title || "").toLowerCase().includes(q) ||
-          (r.request_description || "").toLowerCase().includes(q)
+      requests = requests.filter(r =>
+        (r.request.request_title || "").toLowerCase().includes(q) ||
+        (r.request.request_description || "").toLowerCase().includes(q)
       );
     }
 
+    // 3️⃣ optionally filter by status if you want (though these are "Open")
     if (statusQuery) {
+      // your coerceStatus function could be used here if needed
       const normalized = coerceStatus(statusQuery);
-      list = list.filter((r) => r.request_status === normalized);
+      requests = requests.filter(r => r.request.request_status === normalized);
     }
 
-    list.sort((a, b) => {
-      const da = a.created_at ? new Date(a.created_at as any).getTime() : 0;
-      const db = b.created_at ? new Date(b.created_at as any).getTime() : 0;
-      return db - da;
-    });
+    // 4️⃣ convert to dashboard-friendly format
+    const dashboardList = await individualRequestDetailsOnDashboard(requests);
 
-    return res.json(list.slice(0, 50).map(toUiRow));
+    return res.json(dashboardList.slice(0, 50));
   } catch (err) {
     console.error("viewRequests error:", err);
     return res.status(500).json({ error: "Failed to fetch requests" });
   }
 };
+
 
 // ------------- POST /api/requests/:id/accept --------------
 export const acceptRequest = async (req: Request, res: Response) => {
