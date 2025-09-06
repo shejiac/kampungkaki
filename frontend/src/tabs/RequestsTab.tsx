@@ -17,7 +17,7 @@ export default function RequestsTab({
       {/* Single header row with title + Create button */}
       {mode === 'list' && (
         <div style={{ display:'flex', alignItems:'center', gap:12, margin:'6px 0 16px' }}>
-          <h2 style={{ fontSize:28, fontWeight:800, margin:0, flex:1 }}>My Requests</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0, flex: 1 }}>My Requests</h2>
           <button className="btn primary" onClick={() => setMode('form')}>Create request</button>
         </div>
       )}

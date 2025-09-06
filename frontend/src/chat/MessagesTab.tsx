@@ -65,7 +65,7 @@ export default function Messages({
           transform: showChat ? 'translateX(-110%)' : 'translateX(0)',
         }}
       >
-        <div style={{ fontWeight:700, color:'#6B7280', padding:'8px 0' }}>Messages</div>
+        <div style={{ fontSize: 20, fontWeight: 700, margin: 0, flex: 1 }}>My Messages</div>
 
         {loading && <div style={{ color:'#6B7280' }}>Loading…</div>}
         {err && <div style={{ color:'#ef4444' }}>{err}</div>}

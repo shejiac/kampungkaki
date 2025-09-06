@@ -7,7 +7,7 @@ export default function RequestList({ embed = false, onCreate }) {
       {/* Hide header when embedded inside RequestsTab */}
       {!embed && (
         <div className="list-head" style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <h3 style={{ margin:0, flex:1 }}>My Requests</h3>
+          <h3 style={{ fontSize: 20, fontWeight: 700, margin: 0, flex: 1 }}>My Requests</h3>
           <button className="btn primary" onClick={onCreate}>Create request</button>
         </div>
       )}

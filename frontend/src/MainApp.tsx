@@ -89,7 +89,7 @@ export default function MainApp() {
           aria-disabled={!user.pwd && tab!=='myrequests'}
           title={!user.pwd ? 'Only beneficiaries can create requests' : undefined}
         >
-          My Requests
+          Request
         </button>
         <button
           className={`kk-tab ${tab==='search' ? 'kk-tab--active' : ''}`}
@@ -101,7 +101,7 @@ export default function MainApp() {
           className={`kk-tab ${tab==='messages' ? 'kk-tab--active' : ''}`}
           onClick={() => setTab('messages')}
         >
-          Messages
+          Chat
         </button>
         <button
           className={`kk-tab ${tab==='history' ? 'kk-tab--active' : ''}`}
