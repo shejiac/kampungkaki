@@ -39,7 +39,16 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
 // ---------- middleware ----------
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ],
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","X-User-Id"],
+  credentials: false,
+}));
+app.options("*", cors());
 app.use(express.json());
 
 // ---------- root test ----------
@@ -166,38 +175,7 @@ app.post("/api/messages", async (req, res) => {
 });
 
 // ---------- accept request: create chat + acceptedRequest, return {threadId} ----------
-app.post("/api/requests/:id/accept", async (req: Request, res: Response) => {
-  try {
-    const volunteerId = req.header("X-User-Id");
-    if (!volunteerId) return res.status(401).json({ error: "Missing X-User-Id" });
-
-    const requestId = req.params.id;
-    const requesterId = await getRequesterbyRequest(requestId);
-
-    // create/upsert chat row
-    const chat: Chat = {
-      request_id: requestId,
-      requester_id: requesterId,
-      volunteer_id: volunteerId,
-    };
-    await upsertChat(chat);
-
-    // mark request as Ongoing + write acceptedRequest
-    await updateStatus(requestId, "Ongoing");
-
-    const accepted: AcceptedRequestInfo = {
-      request_id: requestId,
-      requester_id: requesterId,
-      volunteer_id: volunteerId,
-      request_status: "Ongoing",
-    };
-    await upsertAcceptedRequest(accepted);
-
-    res.json({ threadId: requestId }); // FE opens with request_id
-  } catch (e: any) {
-    res.status(500).json({ error: e?.message || "accept_failed" });
-  }
-});
+app.post("/api/requests/:id/accept", acceptRequest); 
 
 // ---------- start/end: set start/end timestamps on AcceptedRequest ----------
 app.post("/api/events/:threadId/start", async (req: Request, res: Response) => {

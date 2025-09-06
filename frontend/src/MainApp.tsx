@@ -174,26 +174,35 @@ export default function MainApp() {
 
 /** ---------- UI bits ---------- **/
 function AnimatedStatsRow({
-  hidden, volunteers, requests, helped
-}:{ hidden:boolean; volunteers:number; requests:number; helped:number }) {
+  hidden,
+  volunteers,
+  requests,
+  helped,
+}: {
+  hidden: boolean;
+  volunteers: number;
+  requests: number;
+  helped: number;
+}) {
   return (
     <div
       style={{
-        overflow:'hidden',
-        transition:'max-height 240ms ease, opacity 240ms ease, transform 240ms ease, padding 240ms ease',
-        maxHeight:hidden ? 0 : 80,
-        opacity:hidden ? 0 : 1,
-        transform:hidden ? 'translateY(-4px)' : 'translateY(0)',
+        overflow: 'hidden',
+        transition:
+          'max-height 240ms ease, opacity 240ms ease, transform 240ms ease, padding 240ms ease',
+        maxHeight: hidden ? 0 : 80,
+        opacity: hidden ? 0 : 1,
+        transform: hidden ? 'translateY(-4px)' : 'translateY(0)',
         padding: hidden ? '0 16px' : '8px 16px 4px 16px',
       }}
     >
-      <div style={{ display:'flex', gap:12 }}>
-        <Stat label="Volunteers" value={volunteers}/>
-        <Stat label="Requests" value={requests}/>
-        <Stat label="Helped" value={helped}/>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Stat label="Volunteers" value={volunteers ?? 0} />
+        <Stat label="Requests" value={requests ?? 0} />
+        <Stat label="Helped" value={helped ?? 0} />
       </div>
     </div>
-  )
+  );
 }
 
 function Stat({label, value}:{label:string; value:number}) {
