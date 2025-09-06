@@ -52,7 +52,7 @@ async function ensureChatId(requestId: string): Promise<string> {
 }
 
 const app = express();
-const PORT = Number(process.env.PORT) || 4000;
+const PORT = Number(process.env.PORT) || 5000;
 
 // ---------- middleware ----------
 app.use(cors({
