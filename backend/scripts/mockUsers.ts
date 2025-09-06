@@ -21,7 +21,7 @@ export const mockUsers: User[] = [
     updated_at: new Date("2025-02-01T15:20:00Z"),
   },
   {
-    user_id: "u2",
+    user_id: "23f7c504-8f77-4cb1-b402-147c3ffed70c",
     user_name: "Brian Lee",
     phone_number: "+6598765432",
     home_address: "Blk 456 Bukit Batok St 22 #10-45",
@@ -32,7 +32,7 @@ export const mockUsers: User[] = [
     updated_at: new Date("2025-02-18T08:00:00Z"),
   },
   {
-    user_id: "u3",
+    user_id: "4869fc73-e2b5-48c7-9000-f51fdef864ae",
     user_name: "Cheryl Wong",
     phone_number: "+6581122334",
     pwd: true,                       // both volunteer and pwd
