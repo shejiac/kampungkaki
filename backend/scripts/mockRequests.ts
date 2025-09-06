@@ -45,13 +45,13 @@ export const mockRequests: RequestInfo[] = [
     request_time: "2025-03-06T14:00:00Z",
     request_approx_duration: "2 hours",
     request_priority: "High",
-    request_status: "Ongoing",
+    request_status: "Open",
     created_at: new Date("2025-02-28T09:30:00Z"),
     updated_at: new Date("2025-03-01T12:00:00Z"),
   },
   {
     request_id: uuidv4(),  // Fixed request ID for consistency
-    requester_id: "u3", 
+    requester_id: "4869fc73-e2b5-48c7-9000-f51fdef864ae", 
     volunteer_id: undefined, 
     request_title: "Change Bedsheets",
     request_type: "Home Task",

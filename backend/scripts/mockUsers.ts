@@ -15,7 +15,7 @@ export const mockUsers: User[] = [
     phone_number: "+6591234567",
     home_address: "Blk 123 Ang Mo Kio Ave 5 #05-12",
     pwd: true,                // person with disability
-    volunteer: false,         // not volunteer
+    volunteer: true,         // and volunteer
     via_hours: "0",
     created_at: new Date("2025-01-10T09:30:00Z"),
     updated_at: new Date("2025-02-01T15:20:00Z"),
@@ -35,8 +35,8 @@ export const mockUsers: User[] = [
     user_id: "4869fc73-e2b5-48c7-9000-f51fdef864ae",
     user_name: "Cheryl Wong",
     phone_number: "+6581122334",
-    pwd: true,                       // both volunteer and pwd
-    volunteer: true,
+    pwd: true,                       // just pwd
+    volunteer: false,
     via_hours: "50",
     created_at: new Date("2025-02-05T14:45:00Z"),
     updated_at: new Date("2025-02-15T17:10:00Z"),
