@@ -4,7 +4,7 @@ import { upsertCreatedRequest } from '../src/helpers/pwd/upsertCreatedRequest';
 
 export const mockRequests: RequestInfo[] = [
   {
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: undefined,  
     request_title: "Grocery Shopping Help",
     request_type: "Shopping",
@@ -19,7 +19,7 @@ export const mockRequests: RequestInfo[] = [
     updated_at: new Date("2025-03-01T08:00:00Z"),
   },
   {
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: "u2", 
     request_title: "Doctor’s Appointment Escort",
     request_type: "Medical",
@@ -34,7 +34,7 @@ export const mockRequests: RequestInfo[] = [
     updated_at: new Date("2025-03-01T12:00:00Z"),
   },
   {
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: "u2", 
     request_title: "Change Bedsheets",
     request_type: "Home Task",
@@ -49,7 +49,7 @@ export const mockRequests: RequestInfo[] = [
     updated_at: new Date("2025-03-04T10:00:00Z"),
   },
   {
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: undefined,
     request_title: "Wheelchair Ramp Assistance",
     request_type: "Transport",
@@ -64,7 +64,7 @@ export const mockRequests: RequestInfo[] = [
     updated_at: new Date("2025-03-02T11:00:00Z"),
   },
   {
-    requester_id: "u1", // Evelyn Koh
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", // Evelyn Koh
     volunteer_id: "u2",  // Alice Tan (PWD) as volunteer
     request_title: "Help Reading Letters",
     request_type: "Companionship",

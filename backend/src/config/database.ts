@@ -1,50 +1,38 @@
-import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { Pool } from 'pg';
 
 dotenv.config();
 
-// Create PostgreSQL pool for user profiles
+// Log the environment variables for debugging
+console.log("DB_USER:", process.env.DB_USER);
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
+console.log("DB_HOST:", process.env.DB_HOST);
+console.log("DB_NAME:", process.env.DB_NAME);
+console.log("DB_PORT:", process.env.DB_PORT);
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:
-    process.env.DATABASE_SSL === 'false'
-      ? false
-      : { rejectUnauthorized: false },
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  database: process.env.DB_NAME,
+  ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
-async function initDb() {
-  await pool.query(`
-    create table if not exists users (
-      id serial primary key,
-      phone text unique not null,
-      full_name text,
-      age int,
-      address text,
-      avatar_url text,
-      created_at timestamptz default now(),
-      updated_at timestamptz default now()
-    );
-
-    create or replace function set_updated_at()
-    returns trigger as $$
-    begin
-      new.updated_at = now();
-      return new;
-    end;
-    $$ language plpgsql;
-
-    drop trigger if exists trg_users_updated on users;
-    create trigger trg_users_updated
-      before update on users
-      for each row execute procedure set_updated_at();
-  `);
-  console.log('✅ PostgreSQL DB ready');
-}
-
-// Initialize database on startup
-initDb().catch((e) => {
-  console.error('❌ PostgreSQL DB init error:', e);
-  process.exit(1);
-});
+// Test DB connection
+(async () => {
+  try {
+    const client = await pool.connect();
+    console.log("✅ Connected to the database successfully!");
+    client.release();
+  } catch (err: unknown) {
+    // Type the error as an instance of Error
+    if (err instanceof Error) {
+      console.error("❌ Database connection failed:", err.message);
+    } else {
+      console.error("❌ Database connection failed with an unknown error");
+    }
+  }
+})();
 
 export { pool };

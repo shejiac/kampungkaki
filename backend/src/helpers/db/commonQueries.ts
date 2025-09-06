@@ -20,6 +20,7 @@ export interface CommonQueries {
   getRequestByVolunteerId: (volunteerId: string) => Promise<DbQueryResult<RequestInfo[]>>;
   getAcceptedRequestByRequestId: (requestId: string) => Promise<DbQueryResult<AcceptedRequestInfo>>;
   getChatsByRequestId: (requestId: string) => Promise<DbQueryResult<Chat>>;
+  getChatsByChatId: (ChatId: string) => Promise<DbQueryResult<Chat>>;
   getMessagesByChatId: (chatId: string) => Promise<DbQueryResult<ChatMessage[]>>;
   getNumberOfRequests: () => Promise<DbQueryResult<number>>;
   getNumberOfPWDs: () => Promise<DbQueryResult<number>>;
@@ -40,7 +41,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
             INSERT INTO kampung_kaki.t_users (
               user_id, user_name, phone_number, 
               home_address, pwd, volunteer, via_hours, created_at, updated_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8, NOW()), COALESCE($9, NOW()))
             ON CONFLICT (user_id)
             DO UPDATE SET
               user_id      = EXCLUDED.user_id,
@@ -84,7 +85,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
               request_time, request_approx_duration, request_priority,
               request_status, created_at, updated_at
             )
-            VALUES (COALESCE($1, uuid_generate_v4()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+            VALUES (COALESCE($1, uuid_generate_v4()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, COALESCE($13, NOW()), COALESCE($14, NOW()))
             ON CONFLICT (request_id)
             DO UPDATE SET
               volunteer_id = EXCLUDED.volunteer_id,
@@ -113,6 +114,8 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
             request_approx_duration,
             request_priority,
             request_status,
+            created_at,
+            updated_at
           ];
 
           await db.query(query, params);
@@ -179,7 +182,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `SELECT * FROM kampung_kaki.t_requests WHERE requester_id = $1`;
           const result = await db.query(query, [requesterId]);
           if (!result.rows.length) {
-            return { success: false, error: 'Request not found' };
+            return { success: true, data: []  };
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
@@ -207,7 +210,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `SELECT * FROM kampung_kaki.t_requests WHERE volunteer_id = $1`;
           const result = await db.query(query, [volunteerId]);
           if (!result.rows.length) {
-            return { success: false, error: 'Request not found' };
+            return { success: true, data: []  };
           }
           return { success: true, data: result.rows as RequestInfo[] };
         } catch (error) {
@@ -236,7 +239,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `
             INSERT INTO kampung_kaki.t_chats (
               chat_id, request_id, requester_id, volunteer_id, created_at
-            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5)
+            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,COALESCE($5, NOW()))
             ON CONFLICT (chat_id)
             DO NOTHING;
           `;
@@ -256,7 +259,7 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           const query = `
             INSERT INTO kampung_kaki.t_chats_messages (
               message_id, chat_id, sender_id, message_type, body, created_at
-            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5,$6)
+            ) VALUES (COALESCE($1, uuid_generate_v4()),$2,$3,$4,$5,COALESCE($6, NOW()))
             ON CONFLICT (message_id)
             DO NOTHING;
           `;
@@ -277,6 +280,17 @@ const commonQueries = (db: DbInterface): CommonQueries => ({
           return { success: true, data: result.rows[0] as Chat };
         } catch (error: any) {
           logger.error(`Error fetching chats for request ${requestId}: ${errorMessage(error)}`);
+          return { success: false, error: error.message };
+        }
+      },
+
+      getChatsByChatId: async (chatId: string) => {
+        try {
+          const query = `SELECT * FROM kampung_kaki.t_chats WHERE chat_id = $1`;
+          const result = await db.query(query, [chatId]);
+          return { success: true, data: result.rows[0] as Chat };
+        } catch (error: any) {
+          logger.error(`Error fetching chats for request ${chatId}: ${errorMessage(error)}`);
           return { success: false, error: error.message };
         }
       },

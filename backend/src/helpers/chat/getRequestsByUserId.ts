@@ -9,25 +9,24 @@ export async function getRequestsByUserId(user_id: string): Promise<RequestInfo[
     const request_list: RequestInfo[] = [];
     const queries = db.helpers;
 
-    // Requests where the user is a requester
     const result = await queries.getRequestByRequesterId(user_id);
-    if (!result.success || !result.data) {
+    if (!result.success) {
       logger.error(`Failed to fetch requests as requester`);
+    } else if (!result.data || result.data.length === 0) {
+      logger.debug(`No requests found for user ${user_id} as requester`);
     } else {
-        for (const r of result.data) {
-          request_list.push(r);
-        }
-      }
+      request_list.push(...result.data);
+    }
 
     // Requests where the user is a volunteer
     const result2 = await queries.getRequestByVolunteerId(user_id);
-    if (!result2.success || !result2.data) {
-      logger.error(`Failed to fetch requests as volunteer`);
+    if (!result2.success) {
+      logger.error(`DB query failed for requests as volunteer: ${result2.error}`);
+    } else if (!result2.data || result2.data.length === 0) {
+      logger.debug(`No requests found for user ${user_id} as volunteer`);
     } else {
-        for (const r of result2.data) {
-          request_list.push(r);
-        }
-      }
+      request_list.push(...result2.data);
+    }
 
     logger.success(`Successfully got requests`);
     return request_list;

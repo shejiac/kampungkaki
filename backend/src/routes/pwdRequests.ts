@@ -1,11 +1,10 @@
 import { Router, Request as ExpressRequest, Response } from "express";
-// Keep Prisma only for GET for now (unless you have read helpers too)
+import { v4 as uuidv4 } from "uuid";
 
-import { upsertCreatedRequest } from "../helpers/pwd/upsertCreatedRequest"; // <-- update the path
-import { RequestInfo } from "../types/request";                // <-- update the path
-// add this near your other imports (update the path if your helper lives elsewhere)
-import { getAllPastRequests } from "../helpers/pwd/getAllPreviousRequests"; // <-- update path if needed
-
+import { upsertCreatedRequest } from "../helpers/pwd/upsertCreatedRequest";
+import { RequestInfo } from "../types/request";
+import { getAllPastRequests } from "../helpers/pwd/getAllPreviousRequests";
+import { pool } from "../config/database";
 
 const router = Router();
 
@@ -24,99 +23,195 @@ function toUiRow(r: RequestInfo) {
     time: r.request_time,
     approxDuration: r.request_approx_duration,
     priority: r.request_priority,
-    status: r.request_status,           // UI shows a badge if present
+    status: r.request_status,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
 
-
-// --------------- Type Helpers for incoming payload ---------------
-type RequestBody = {
-  title: string;
-  type?: string;
-  description?: string;
-  location?: string;
-  initialMeet?: boolean;
-  time?: string;
-  approxDuration?: string;
-  priority?: string;
-  status?: "PENDING" | "OPEN" | "ACCEPTED" | "COMPLETED" | "CANCELLED"; // optional; map to RequestStatus
+// ---------- helpers ----------
+const nn = <T = any>(v: T): T | null => {
+  if (v === undefined || v === null) return null;
+  if (typeof v === "string" && v.trim() === "") return null;
+  return v;
 };
 
-// Utility: map REST payload -> RequestInfo (your domain shape)
+// --------------- Incoming payload ---------------
+type RequestBody = {
+  // accept both shapes from FE
+  title?: string;
+  request_title?: string;
+
+  type?: string;
+  request_type?: string;
+
+  description?: string;
+  request_description?: string;
+
+  location?: string;
+  request_location?: string;
+
+  initialMeet?: boolean;
+  request_initial_meet?: boolean;
+
+  time?: string;                 // ISO string or ""
+  request_time?: string;
+
+  approxDuration?: string;       // interval-like or ""
+  request_approx_duration?: string;
+
+  priority?: string;
+  request_priority?: string;
+
+  status?:  "OPEN" | "ONGOING" | "CLOSED" ;
+  request_status?: "OPEN" | "ONGOING" | "CLOSED" ;
+};
+
+// Map REST payload -> RequestInfo (domain shape)
 function toRequestInfo(body: RequestBody, existing?: Partial<RequestInfo>): RequestInfo {
+  // prefer explicit fields, then existing, then null (not "")
+  const request_title =
+    nn(body.title ?? body.request_title) ??
+    nn(existing?.request_title) ??
+    null;
+
+  const request_type =
+    nn(body.type ?? body.request_type) ??
+    nn(existing?.request_type) ??
+    null;
+
+  const request_description =
+    nn(body.description ?? body.request_description) ??
+    nn(existing?.request_description) ??
+    null;
+
+  const request_location =
+    nn(body.location ?? body.request_location) ??
+    nn(existing?.request_location) ??
+    null;
+
+  const request_initial_meet =
+    (body.initialMeet ?? body.request_initial_meet ??
+      existing?.request_initial_meet ?? false) as boolean;
+
+  const request_time =
+    nn(body.time ?? body.request_time) ??
+    nn(existing?.request_time) ??
+    null;
+
+  const request_approx_duration =
+    nn(body.approxDuration ?? body.request_approx_duration) ??
+    nn(existing?.request_approx_duration) ??
+    null;
+
+  const request_priority =
+    nn(body.priority ?? body.request_priority) ??
+    nn(existing?.request_priority) ??
+    null;
+
+  const request_status =
+    (nn(body.status ?? body.request_status) ??
+      existing?.request_status ??
+      "OPEN") as RequestInfo["request_status"];
+
   return {
-    // if caller is updating, let request_id pass through from existing
-    request_id: existing?.request_id,
+    // generate a new id for create; preserve on update
+    request_id: existing?.request_id ?? uuidv4(),
     requester_id: existing?.requester_id ?? defaultUserId,
-    volunteer_id: existing?.volunteer_id, // not provided by this payload
+    volunteer_id: existing?.volunteer_id ?? null,
 
-    request_title: body.title,
-    request_type: body.type ?? (existing?.request_type ?? ""),
-    request_description: body.description ?? (existing?.request_description ?? ""),
-    request_location: body.location ?? (existing?.request_location ?? ""),
-    request_initial_meet: body.initialMeet ?? (existing?.request_initial_meet ?? false),
-    request_time: body.time ?? (existing?.request_time ?? ""),
-    request_approx_duration: body.approxDuration ?? (existing?.request_approx_duration ?? ""),
-    request_priority: body.priority ?? (existing?.request_priority ?? ""),
+    request_title,
+    request_type,
+    request_description,
+    request_location,
+    request_initial_meet,
+    request_time,               // null if blank
+    request_approx_duration,    // null if blank (avoids ''::interval)
+    request_priority,
+    request_status,
 
-    // Default or keep existing status if caller didn’t supply one
-    request_status: (body.status ?? existing?.request_status ?? "PENDING") as any,
-    created_at: existing?.created_at,
-    updated_at: existing?.updated_at,
-  };
+    created_at: existing?.created_at ?? null,
+    updated_at: existing?.updated_at ?? null,
+  } as RequestInfo;
 }
 
 // -------------------- POST /api/requests --------------------
-router.post(
-  "/",
-  async (req: ExpressRequest<{}, {}, RequestBody>, res: Response) => {
-    try {
-      const { title } = req.body;
-      if (!title) return res.status(400).json({ error: "Title is required" });
+router.post("/", async (req: ExpressRequest<{}, {}, RequestBody>, res: Response) => {
+  try {
+    const rawTitle = (req.body.title ?? req.body.request_title ?? "").trim();
+    if (!rawTitle) return res.status(400).json({ error: "Title is required" });
 
-      // Build RequestInfo and upsert via helper
-      const requestInfo = toRequestInfo(req.body);
-      const ok = await upsertCreatedRequest(requestInfo);
+    const requestInfo = toRequestInfo(req.body);
+    const ok = await upsertCreatedRequest(requestInfo);
 
-      if (!ok) {
-        return res.status(500).json({ error: "Failed to create request" });
-      }
+    if (!ok) return res.status(500).json({ error: "Failed to create request" });
 
-      // If you still want to return the newly created entity, you’ll need
-      // your helper to return it, or re-fetch by some key (e.g., request_id).
-      // For now, just acknowledge success.
-      return res.status(201).json({ success: true });
-    } catch (err: any) {
-      console.error("POST error:", err);
-      return res.status(500).json({ error: "Failed to create request" });
-    }
+    return res.status(201).json({ success: true, request_id: requestInfo.request_id });
+  } catch (err: any) {
+    console.error("POST error:", err);
+    return res.status(500).json({ error: "Failed to create request" });
   }
-);
+});
 
+// -------------------- GET /api/requests --------------------
 // -------------------- GET /api/requests --------------------
 router.get("/", async (req, res) => {
   try {
-    const q = String(req.query.q || "").trim().toLowerCase();
     const requesterId = String(req.query.userId || defaultUserId);
+    const q = String(req.query.q || "").trim().toLowerCase();
 
-    const all = await getAllPastRequests(requesterId);
+    // simple direct SQL instead of getAllPastRequests()
+    const { rows } = await pool.query(
+      `
+      SELECT
+        request_id,
+        requester_id,
+        volunteer_id,
+        request_title,
+        request_type,
+        request_description,
+        request_location,
+        request_initial_meet,
+        request_time,
+        request_approx_duration,
+        request_priority,
+        request_status,
+        created_at,
+        updated_at
+      FROM kampung_kaki.t_requests
+      WHERE requester_id = $1
+      ORDER BY created_at DESC
+      LIMIT 200
+      `,
+      [requesterId]
+    );
+
+    // client-side q filter (same as before)
     const filtered = q
-      ? all.filter(r =>
+      ? rows.filter((r) =>
           (r.request_title || "").toLowerCase().includes(q) ||
           (r.request_description || "").toLowerCase().includes(q)
         )
-      : all;
+      : rows;
 
-    const sorted = filtered.sort((a, b) => {
-      const da = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const db = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return db - da;
+    // map to the UI shape RequestList expects
+    const toUiRow = (r: any) => ({
+      id: r.request_id,
+      userId: r.requester_id,
+      title: r.request_title,
+      description: r.request_description,
+      type: r.request_type,
+      location: r.request_location,
+      initialMeet: r.request_initial_meet,
+      time: r.request_time,
+      approxDuration: r.request_approx_duration,
+      priority: r.request_priority,
+      status: r.request_status,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     });
 
-    // return the shape that RequestList reads
-    return res.json(sorted.slice(0, 50).map(toUiRow));
+    return res.json(filtered.map(toUiRow));
   } catch (err: any) {
     console.error("GET error:", err);
     return res.status(500).json({ error: "Failed to fetch requests" });
@@ -125,15 +220,14 @@ router.get("/", async (req, res) => {
 
 
 // -------------------- PUT /api/requests/:id --------------------
-// -------------------- PUT /api/requests/:id --------------------
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const requesterId = defaultUserId; // or derive from auth/session
+    const requesterId = defaultUserId;
 
-    if (!req.body.title) return res.status(400).json({ error: "Title is required" });
+    const rawTitle = (req.body.title ?? req.body.request_title ?? "").trim();
+    if (!rawTitle) return res.status(400).json({ error: "Title is required" });
 
-    // get user's requests, then find the one to update
     const all = await getAllPastRequests(requesterId);
     const existing = all.find(r => r.request_id === id);
     if (!existing) return res.status(404).json({ error: "Request not found" });
@@ -143,14 +237,11 @@ router.put("/:id", async (req, res) => {
     const ok = await upsertCreatedRequest(merged);
     if (!ok) return res.status(500).json({ error: "Failed to update request" });
 
-    // Optionally return the updated row in UI shape
     return res.json(toUiRow(merged));
   } catch (err: any) {
     console.error("PUT error:", err);
     return res.status(500).json({ error: "Failed to update request" });
   }
 });
-
-
 
 export default router;

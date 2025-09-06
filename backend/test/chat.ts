@@ -6,7 +6,7 @@ import { Chat } from '../src/types/chats';
 export const mockChats: Chat[] = [
   {
     request_id: "76002553-ed79-4068-aeb0-5d62e6a07022",       
-    requester_id: "u1",     // Alice Tan (PWD)
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",     // Alice Tan (PWD)
     volunteer_id: "u5",     // Jason Tan (Volunteer)
     created_at: new Date("2025-03-01T09:00:00Z"),
   },
@@ -31,7 +31,7 @@ export const mockChats: Chat[] = [
   {
     request_id: "763806bd-3515-4f9e-8f1a-4e15b8110b61",       
     requester_id: "u5",     // Cheryl Wong
-    volunteer_id: "u1",     // Daniel Lee
+    volunteer_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",     // Daniel Lee
     created_at: new Date("2025-03-04T10:15:00Z"),
   },
 ];

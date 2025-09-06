@@ -187,7 +187,6 @@
 .meta-item a { color:#2563eb; text-decoration:none; font-weight:500; }
 .meta-item a:hover { text-decoration:underline; }
 
-/* ========== Compact card style like the screenshot ========== */
 .list { gap: 12px; } /* a touch more air between cards */
 
 .card.card-compact {
@@ -288,4 +287,35 @@
   .card-compact .card-head { align-items: flex-start; }
 }
 
+/* prevent any horizontal scroll from this page section */
+.list-wrap { overflow-x: hidden; }
+
+/* single-row layout that keeps Refresh visible without scrolling */
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 8px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;         /* clip tiny sub-pixel overflow */
+}
+
+/* pushes Refresh to the far right */
+.filters-row .spacer { flex: 1; }
+
+/* make the search field take remaining space but never cause overflow */
+.filters-row .field {
+  flex: 1 1 auto;
+  min-width: 0;            /* critical: allows flex item to shrink */
+}
+
+/* keep the select and button at natural size */
+.filters-row select,
+.filters-row .btn {
+  flex: 0 0 auto;
+}
+
+/* optional: keep the label compact on one line */
+.filter { white-space: nowrap; }
 

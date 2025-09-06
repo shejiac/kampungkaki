@@ -1,11 +1,16 @@
-// run with: npx ts-node backend/scripts/mockUsers.ts
+import { User } from '../src/types/user'; 
+import { upsertUser } from '../src/helpers/profile/upsertUsers'; // Import upsertUser from the helper
+import dotenv from "dotenv";
 
-import { User } from '../src/types/user';
-import { upsertUser } from '../src/helpers/profile/upsertUsers'
+dotenv.config();
+
+// Verify environment variables
+console.log("DB_USER:", process.env.DB_USER);  
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
 
 export const mockUsers: User[] = [
   {
-    user_id: "u1",
+    user_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",
     user_name: "Karen Wong",
     phone_number: "+6591234567",
     home_address: "Blk 123 Ang Mo Kio Ave 5 #05-12",
@@ -35,22 +40,25 @@ export const mockUsers: User[] = [
     via_hours: "50",
     created_at: new Date("2025-02-05T14:45:00Z"),
     updated_at: new Date("2025-02-15T17:10:00Z"),
-  }]
-
-export async function UpsertUsers(users: User[]): Promise<void> {
-    for (const u of users) {
-      try {
-        const result = await upsertUser(u); 
-        console.log(`Upserted user ${u.user_id}:', result`);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error(`Failed to upsert user ${u.user_id}: ${msg}`);
-      }
-    }
-    console.log("All users processed.");
-    return 
   }
-  
-  (async () => {
-    await UpsertUsers(mockUsers);
-  })();
+];
+
+// Function to upsert mock users
+export async function UpsertUsers(users: User[]): Promise<void> {
+  for (const u of users) {
+    try {
+      console.log(`Upserting user with ID: ${u.user_id}`);
+      const result = await upsertUser(u); 
+      console.log(`Upserted user ${u.user_id}:`, result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Failed to upsert user ${u.user_id}: ${msg}`);
+    }
+  }
+  console.log("All users processed.");
+}
+
+// Execute the upsert function
+(async () => {
+  await UpsertUsers(mockUsers);
+})();

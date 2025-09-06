@@ -1,43 +1,83 @@
-﻿// controllers/requestcontroller.js
-import { getAllPastRequests } from "../helpers/pwd/getAllPreviousRequests.ts";
-import { upsertCreatedRequest } from "../helpers/pwd/upsertCreatedRequest.ts";
+﻿// src/controllers/pwdRequestController.ts
+import { Request, Response } from "express";
+import { getAllPastRequests } from "../helpers/pwd/getAllPreviousRequests";
+import { upsertCreatedRequest } from "../helpers/pwd/upsertCreatedRequest";
+import type { RequestInfo, RequestStatus } from "../types/request";
+
+type RequestBody = {
+  userId?: string;
+  title?: string;
+  type?: string;
+  description?: string;
+  location?: string;
+  initialMeet?: boolean;
+  time?: string;
+  approxDuration?: string;
+  duration?: string;   // legacy alias
+  priority?: string;
+  urgency?: string;    // legacy alias
+  status?: string;     // free-form; we coerce
+};
 
 const DEFAULT_USER_ID = "1b4e28ba-2fa1-11d2-883f-0016d3cca427";
 
-// Map incoming UI/body -> RequestInfo (your domain)
-function toRequestInfo(body = {}, existing = {}) {
+// TitleCase canonical statuses from your types
+const CANON: ReadonlyArray<RequestStatus> = ["Open", "Ongoing", "Closed"] as const;
+
+/** Normalize arbitrary input to one of 'Open' | 'Ongoing' | 'Closed'. */
+function coerceStatus(input: unknown, fallback: RequestStatus = "Open"): RequestStatus {
+  const raw = String(input ?? "").trim().toLowerCase();
+
+  // common synonyms
+  if (raw === "accepted" || raw === "in_progress" || raw === "in-progress" || raw === "ongoing")
+    return "Ongoing";
+  if (raw === "closed" || raw === "done" || raw === "completed" || raw === "cancelled" || raw === "canceled")
+    return "Closed";
+  if (raw === "open" || raw === "pending" || raw === "new")
+    return "Open";
+
+  // unknown → fallback
+  return fallback;
+}
+
+/** Build a RequestInfo from body + existing, matching central type exactly */
+function toRequestInfo(body: RequestBody = {}, existing: Partial<RequestInfo> = {}): RequestInfo {
   return {
     request_id: existing.request_id,
-
-    // prefer explicit body.userId; fall back to default
     requester_id: existing.requester_id ?? body.userId ?? DEFAULT_USER_ID,
-    volunteer_id: existing.volunteer_id,
+    // your type is `volunteer_id?: string` → use undefined, not null
+    volunteer_id: existing.volunteer_id ?? undefined,
 
     request_title: body.title ?? existing.request_title ?? "",
     request_type: body.type ?? existing.request_type ?? "",
     request_description:
-      body.request_description ?? body.description ?? existing.request_description ?? "",
+      body.description ??
+      (body as any).request_description ??
+      existing.request_description ??
+      "",
     request_location: body.location ?? existing.request_location ?? "",
+
     request_initial_meet:
       typeof body.initialMeet === "boolean"
         ? body.initialMeet
-        : existing.request_initial_meet ?? false,
+        : (existing.request_initial_meet ?? false),
+
     request_time: body.time ?? existing.request_time ?? "",
     request_approx_duration:
       body.approxDuration ??
       body.duration ??
       existing.request_approx_duration ??
       "",
-    request_priority: body.priority ?? body.urgency ?? existing.request_priority ?? "",
 
-    request_status: body.status ?? existing.request_status ?? "OPEN",
+    request_priority: body.priority ?? body.urgency ?? existing.request_priority ?? "",
+    request_status: coerceStatus(body.status ?? existing.request_status, existing.request_status ?? "Open"),
     created_at: existing.created_at,
     updated_at: existing.updated_at,
   };
 }
 
-// Optional: map domain -> UI shape expected by RequestList.jsx
-function toUiRow(r) {
+/** Map domain → UI row */
+function toUiRow(r: RequestInfo) {
   return {
     id: r.request_id,
     userId: r.requester_id,
@@ -55,17 +95,16 @@ function toUiRow(r) {
   };
 }
 
-// POST /api/requests
-export const createRequest = async (req, res) => {
+// ------------------- POST /api/requests -------------------
+export const createRequest = async (req: Request, res: Response) => {
   try {
-    const { title } = req.body || {};
-    if (!title) return res.status(400).json({ error: "Title is required" });
+    const body = req.body as RequestBody;
+    if (!body?.title) return res.status(400).json({ error: "Title is required" });
 
-    const requestInfo = toRequestInfo(req.body);
+    const requestInfo = toRequestInfo(body);
     const ok = await upsertCreatedRequest(requestInfo);
     if (!ok) return res.status(500).json({ error: "Failed to save request" });
 
-    // If your helper returns the created entity, you can return it; otherwise:
     return res.status(201).json({ success: true });
   } catch (err) {
     console.error("createRequest error:", err);
@@ -73,14 +112,14 @@ export const createRequest = async (req, res) => {
   }
 };
 
-// GET /api/requests?userId=...&q=...&status=...
-export const viewRequests = async (req, res) => {
+// ------------------- GET /api/requests --------------------
+export const viewRequests = async (req: Request, res: Response) => {
   try {
-    const userId = String(req.query.userId || DEFAULT_USER_ID);
-    const q = String(req.query.q || "").trim().toLowerCase();
-    const status = String(req.query.status || "").trim().toUpperCase();
+    const userId = String((req.query.userId as string) || DEFAULT_USER_ID);
+    const q = String((req.query.q as string) || "").trim().toLowerCase();
+    const statusQuery = String((req.query.status as string) || "").trim();
 
-    let list = await getAllPastRequests(userId);
+    let list = (await getAllPastRequests(userId)) as RequestInfo[];
 
     if (q) {
       list = list.filter(
@@ -90,14 +129,15 @@ export const viewRequests = async (req, res) => {
       );
     }
 
-    if (status) {
-      list = list.filter((r) => (r.request_status || "").toUpperCase() === status);
+    if (statusQuery) {
+      const normalized = coerceStatus(statusQuery);
+      list = list.filter((r) => r.request_status === normalized);
     }
 
     list.sort((a, b) => {
-      const da = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const db = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return db - da; // newest first
+      const da = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+      const db = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+      return db - da;
     });
 
     return res.json(list.slice(0, 50).map(toUiRow));
@@ -107,20 +147,19 @@ export const viewRequests = async (req, res) => {
   }
 };
 
-// POST /api/requests/:id/accept?userId=...
-export const acceptRequest = async (req, res) => {
+// ------------- POST /api/requests/:id/accept --------------
+export const acceptRequest = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const userId = String(req.query.userId || DEFAULT_USER_ID);
+    const userId = String((req.query.userId as string) || DEFAULT_USER_ID);
 
-    const all = await getAllPastRequests(userId);
+    const all = (await getAllPastRequests(userId)) as RequestInfo[];
     const existing = all.find((r) => r.request_id === id);
     if (!existing) return res.status(404).json({ error: "Request not found" });
-    if (existing.requester_id !== userId) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
+    if (existing.requester_id !== userId) return res.status(403).json({ error: "Unauthorized" });
 
-    const updated = { ...existing, request_status: "ACCEPTED" };
+    // Move to 'Ongoing' (your valid status)
+    const updated: RequestInfo = { ...existing, request_status: "Ongoing" };
     const ok = await upsertCreatedRequest(updated);
     if (!ok) return res.status(500).json({ error: "Failed to accept request" });
 
