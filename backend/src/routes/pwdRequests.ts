@@ -63,8 +63,8 @@ type RequestBody = {
   priority?: string;
   request_priority?: string;
 
-  status?: "PENDING" | "OPEN" | "ACCEPTED" | "COMPLETED" | "CANCELLED";
-  request_status?: "PENDING" | "OPEN" | "ACCEPTED" | "COMPLETED" | "CANCELLED";
+  status?:  "OPEN" | "ONGOING" | "CLOSED" ;
+  request_status?: "OPEN" | "ONGOING" | "CLOSED" ;
 };
 
 // Map REST payload -> RequestInfo (domain shape)
