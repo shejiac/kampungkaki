@@ -154,7 +154,6 @@ router.post("/", async (req: ExpressRequest<{}, {}, RequestBody>, res: Response)
 });
 
 // -------------------- GET /api/requests --------------------
-// -------------------- GET /api/requests --------------------
 router.get("/", async (req, res) => {
   try {
     const requesterId = String(req.query.userId || defaultUserId);

@@ -17,7 +17,7 @@ export async function getAllRequestDetails(): Promise<OpenRequestWithNames[]> {
   try {
     const queries = db.helpers;
 
-    const requestsResult = await queries.getRequestsByStatus('open');
+    const requestsResult = await queries.getRequestsByStatus('Open');
     if (!requestsResult.success) {
       logger.error('Failed to fetch open requests');
       return [];
