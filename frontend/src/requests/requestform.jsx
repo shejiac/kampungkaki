@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./requestform.css";
 import { v4 as uuidv4 } from 'uuid';
-const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
+import { API } from "../api";
 
 export default function RequestForm({ onSuccess, onCancel }) {
   const [step, setStep] = useState(1);
