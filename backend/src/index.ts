@@ -92,23 +92,43 @@ app.get("/api/threads", async (req, res) => {
     const requests = await getRequestsByUserId(userId);
 
     const threads = await Promise.all(
-      requests.map(async (r: any) => {
-        const requestId: string | undefined = r?.request_id;
+      (requests || []).map(async (r: any) => {
+        const requestId: string | undefined = r?.request_id || r?.id;
         if (!requestId) return null;
 
+        // always ensure chat exists and get its id
         const chatId = await ensureChatId(requestId);
 
+        // fetch last message (safe)
         const msgs = await getChatMessages(chatId);
         const last = Array.isArray(msgs) && msgs.length ? msgs[msgs.length - 1] : null;
 
+        // robust title + fields so FE never gets undefined
+        const title =
+          r?.request_title ??
+          r?.title ??
+          r?.task_title ??
+          r?.name ??
+          r?.request_type ??
+          "Request";
+
         return {
-          id: requestId,
+          // FE relies on this mapping
+          id: requestId,                 // threadId == request_id
+          request_id: requestId,         // expose both just in case
+          chat_id: chatId,
+
+          requester_id: r?.requester_id ?? null,
+          volunteer_id: r?.volunteer_id ?? null,
+
           status: r?.request_status ?? "pending",
           started: Boolean(r?.request_start_time),
           ended: Boolean(r?.request_end_time),
+
           lastMessageAt: last?.created_at ?? null,
           lastPreview: last?.body ?? "",
-          request: { title: r?.title ?? r?.request_title ?? "Request" },
+
+          request: { title },
         };
       })
     );
@@ -214,21 +234,25 @@ app.post("/api/messages", async (req, res) => {
 app.post("/api/requests/:id/accept", async (req, res) => {
   try {
     const volunteerId = req.header("X-User-Id");
-    if (!volunteerId) return res.status(401).json({ error: "Missing X-User-Id" });
+    if (!volunteerId) return res.status(401).json({ error: "missing_user" });
 
     const requestId = req.params.id;
+    if (!requestId || requestId === "undefined") {
+      return res.status(400).json({ error: "bad_request_id" });
+    }
 
-    // 1) your helper (creates accepted_request, updates status, etc.)
+    // verify request exists (prevents undefined -> uuid error)
+    const r = await getRequestbyRequestId(requestId);
+    if (!r) return res.status(404).json({ error: "request_not_found" });
+
+    // helper may or may not return chat id; we guarantee one:
     const chatIdFromHelper = await acceptRequestHelper(requestId, volunteerId);
-
-    // 2) guarantee chat exists (and get a real chat_id string)
     const chatId =
       typeof chatIdFromHelper === "string" && chatIdFromHelper.length
         ? chatIdFromHelper
         : await ensureChatId(requestId);
 
-    // 3) load request for pretty system message
-    const r = await getRequestbyRequestId(requestId);
+    // pretty system message
     const first = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "");
     const title = first((r as any)?.request_title, (r as any)?.title, "Request");
     const where = first((r as any)?.request_location, (r as any)?.location, (r as any)?.address, "");
@@ -237,18 +261,13 @@ app.post("/api/requests/:id/accept", async (req, res) => {
       ? new Date(whenRaw).toLocaleString("en-SG", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })
       : "";
 
-    // 4) system message (sender_id=null so FE renders as system)
     await upsertChatMessage({
       chat_id: chatId,
-      sender_id: null,
+      sender_id: null,                 // system
       message_type: "system",
-      body:
-        `✅ Volunteer accepted: ${title}` +
-        (where ? ` • Where: ${where}` : "") +
-        (when ? ` • When: ${when}` : ""),
+      body: `✅ Volunteer accepted: ${title}` + (where ? ` • Where: ${where}` : "") + (when ? ` • When: ${when}` : ""),
     } as any);
 
-    // FE expects threadId === request_id
     res.json({ threadId: requestId });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || "accept_failed" });
