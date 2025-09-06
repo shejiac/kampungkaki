@@ -2,38 +2,39 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import "dotenv/config";
+import { randomUUID } from "crypto";
 
-// routers/controllers
+// controllers you already have
 import {
   createRequest,
   viewRequests,
-  acceptRequest,
+  // DO NOT import acceptRequest controller; we implement accept below to return {threadId}
 } from "./controllers/pwdRequestController";
 
 // DB pool for health checks & shutdown
 import { pool } from "./config/database";
 
-// CHAT HELPERS
-import {
-  listChatForUser,
-  getChat,
-  userCreateMessage,
-  startTime,
-  endTime,
-} from "./helpers/chat/mainChatHelpers";
-import { getChatDetails } from "./helpers/chat/getChatsDetails"; 
-import { getRequestsByUserId } from './helpers/chat/getRequestsByUserId';
-import { getChatMessages, getLastChatMessage } from './helpers/chat/getChatMessages';
+// ---- Chat/Request helpers (call the concrete helpers directly) ----
+import { getChatDetailsByReqId } from "./helpers/chat/getChatsDetails";
+import { getRequestsByUserId } from "./helpers/chat/getRequestsByUserId";
+import { getChatMessages, getLastChatMessage } from "./helpers/chat/getChatMessages";
+import { getRequesterbyRequest } from "./helpers/chat/getRequesterByRequestId";
+import { upsertChat } from "./helpers/chat/upsertChat";
+import { upsertChatMessage } from "./helpers/chat/upsertChatMessage";
+import { upsertAcceptedRequest } from "./helpers/chat/upsertAcceptedRequest";
+import { updateStatus } from "./helpers/chat/updateStatus";
+import type { Chat } from "./types/chats";
+import type { AcceptedRequestInfo } from "./types/request";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
 // ---------- middleware ----------
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }))
+app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:5173" }));
 app.use(express.json());
 
 // ---------- root test ----------
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.json({
     message: "KampungKaki Backend API",
     status: "running",
@@ -41,140 +42,214 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// ---------- routes ----------
-app.use("/api/auth", authRoutes);
-
+// ---------- requests (existing) ----------
 app.post("/api/requests", createRequest);
 app.get("/api/requests", viewRequests);
-app.post("/api/requests/:id/accept", acceptRequest);
 
-// 1) inbox
-app.get('/api/threads', async (req, res) => {
+// NOTE: remove/disable auth while Firebase is off
+// DO NOT keep: app.use("/api/auth", authRoutes);
+
+// ---------- inbox: list threads for a user ----------
+app.get("/api/threads", async (req, res) => {
   try {
-    const userId = req.header('X-User-Id');
-    if (!userId) return res.status(401).json({ error: 'Missing X-User-Id' });
+    const userId = req.header("X-User-Id");
+    if (!userId) return res.status(401).json({ error: "Missing X-User-Id" });
 
     const requests = await getRequestsByUserId(userId); // RequestInfo[]
 
-    const threads = (await Promise.all(
-      requests.map(async (r: any) => {
-        const requestId: string | undefined = r?.request_id;
-        if (!requestId) {
-          // skip malformed rows
-          return null;
-        }
+    const threads = (
+      await Promise.all(
+        requests.map(async (r: any) => {
+          const requestId: string | undefined = r?.request_id;
+          if (!requestId) return null;
 
-        // try to get chat_id (may not exist yet if not accepted)
-        let chatId: string | undefined;
-        try {
-          const chat = await getChatDetails(requestId); // { chat_id?, ... }
-          chatId = chat?.chat_id;
-        } catch {
-          chatId = undefined;
-        }
+          // find chat_id (if chat exists)
+          let chatId: string | undefined;
+          try {
+            const chat = await getChatDetailsByReqId(requestId); // { chat_id, requester_id, volunteer_id, ... }
+            chatId = chat?.chat_id;
+          } catch {
+            chatId = undefined;
+          }
 
-        // try to fetch last message (only if we have a chatId)
-        let last: any = null;
-        if (chatId) {
-          const msgs = await getChatMessages(chatId);
-          last = msgs?.length ? await getLastChatMessage(msgs) : null;
-        }
+          // last message preview
+          let last: any = null;
+          if (chatId) {
+            const msgs = await getChatMessages(chatId);
+            last = msgs?.length ? await getLastChatMessage(msgs) : null;
+          }
 
-        return {
-          id: requestId,                                            // threadId = request_id
-          status: r?.request_status ?? 'pending',
-          started: Boolean(r?.request_start_time),
-          ended:   Boolean(r?.request_end_time),
-          lastMessageAt: last?.created_at ?? null,
-          lastPreview:   last?.body ?? '',
-          request: { title: r?.title ?? r?.request_title ?? 'Request' },
-        };
-      })
-    )).filter(Boolean); // drop nulls
+          return {
+            id: requestId, // FE treats threadId == request_id
+            status: r?.request_status ?? "pending",
+            started: Boolean(r?.request_start_time),
+            ended: Boolean(r?.request_end_time),
+            lastMessageAt: last?.created_at ?? null,
+            lastPreview: last?.body ?? "",
+            request: { title: r?.title ?? r?.request_title ?? "Request" },
+          };
+        })
+      )
+    ).filter(Boolean);
 
     res.json({ threads });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'threads_failed' });
+    res.status(500).json({ error: e?.message || "threads_failed" });
   }
 });
 
-// 2) thread details (treat param as request_id)
-app.get('/api/threads/:threadId', async (req, res) => {
+// ---------- thread details: param is request_id ----------
+app.get("/api/threads/:threadId", async (req, res) => {
   try {
-    const userId = req.header('X-User-Id');
-    if (!userId) return res.status(401).json({ error: 'Missing X-User-Id' });
+    const userId = req.header("X-User-Id");
+    if (!userId) return res.status(401).json({ error: "Missing X-User-Id" });
 
-    const requestId = req.params.threadId;      // <- request_id
-    const data = await getChat(requestId);      // your helper expects request_id
+    const requestId = req.params.threadId; // we treat threadId as request_id
+    const chat = await getChatDetailsByReqId(requestId); // -> { chat_id, requester_id, volunteer_id, ... }
+    const chatId = chat?.chat_id;
+
+    const messagesRaw = chatId ? await getChatMessages(chatId) : [];
+    const messages = (messagesRaw ?? []).map((m: any) => ({
+      id: m.message_id ?? randomUUID(),
+      sender_id: m.sender_id ?? null,
+      kind: m.message_type === "system" ? "system" : "user",
+      body: m.body,
+      created_at: m.created_at ?? new Date().toISOString(),
+    }));
+
     res.json({
-      thread: { id: requestId, status: 'pending' },
-      messages: (data.chat_messages ?? []).map((m: any) => ({
-        id: m.message_id ?? crypto.randomUUID(),
-        sender_id: m.sender_id ?? null,
-        kind: m.message_type === 'system' ? 'system' : 'user',
-        body: m.body,
-        created_at: m.created_at ?? new Date().toISOString(),
-      })),
+      thread: { id: requestId, status: "pending" },
+      messages,
       session: null,
     });
   } catch (e: any) {
-    res.status(500).json({ error: e.message || 'thread_failed' });
+    res.status(500).json({ error: e?.message || "thread_failed" });
   }
 });
 
-// 3) send message (body contains threadId = request_id)
-app.post('/api/messages', async (req, res) => {
+// ---------- send message: body.threadId is request_id ----------
+app.post("/api/messages", async (req, res) => {
   try {
-    const userId = req.header('X-User-Id');
-    if (!userId) return res.status(401).json({ error: 'Missing X-User-Id' });
+    const userId = req.header("X-User-Id");
+    if (!userId) return res.status(401).json({ error: "Missing X-User-Id" });
 
     const { threadId, body } = req.body || {};
-    if (!threadId || typeof body !== 'string' || !body.trim()) {
-      return res.status(400).json({ error: 'Bad body' });
+    if (!threadId || typeof body !== "string" || !body.trim()) {
+      return res.status(400).json({ error: "Bad body" });
     }
 
-    // threadId is request_id in this model
-    const chat = await getChatDetails(String(threadId));
+    // map request_id -> chat_id
+    const chat = await getChatDetailsByReqId(String(threadId));
     const chatId: string | undefined = chat?.chat_id;
-    if (!chatId) {
-      return res.status(404).json({ error: 'Chat not found for this request' });
-    }
+    if (!chatId) return res.status(404).json({ error: "Chat not found for this request" });
 
-    await userCreateMessage(chatId, userId, body);
+    await upsertChatMessage({
+      chat_id: chatId,
+      sender_id: userId,
+      message_type: "user",
+      body,
+    } as any);
+
     res.json({ ok: true });
   } catch (e: any) {
-    res.status(500).json({ error: e?.message || 'send_failed' });
+    res.status(500).json({ error: e?.message || "send_failed" });
   }
 });
 
-// 4) start/end session (use request_id; your helpers call getChatDetails inside)
-app.post("/api/events/:threadId/start", async (req: Request, res: Response) => {
-  try { await startTime(req.params.threadId); res.json({ ok: true }) }
-  catch (e: any) { res.status(500).json({ error: e.message || "start_failed" }) }
-});
-app.post("/api/events/:threadId/approve-start", async (req: Request, res: Response) => {
-  try { await startTime(req.params.threadId); res.json({ ok: true }) }
-  catch (e: any) { res.status(500).json({ error: e.message || "approve_start_failed" }) }
-});
-app.post("/api/events/:threadId/request-end", async (_req: Request, res: Response) => {
-  res.json({ ok: true });
-});
-app.post("/api/events/:threadId/approve-end", async (req: Request, res: Response) => {
-  try { await endTime(req.params.threadId); res.json({ ok: true }) }
-  catch (e: any) { res.status(500).json({ error: e.message || "approve_end_failed" }) }
-});
-
-// 5) accept request -> return the request_id as the thread id (consistent with FE)
-import { acceptRequest as acceptRequestHelper } from "./helpers/chat/mainChatHelpers";
+// ---------- accept request: create chat + acceptedRequest, return {threadId} ----------
 app.post("/api/requests/:id/accept", async (req: Request, res: Response) => {
   try {
     const volunteerId = req.header("X-User-Id");
     if (!volunteerId) return res.status(401).json({ error: "Missing X-User-Id" });
 
-    await acceptRequestHelper(req.params.id, volunteerId); // creates chat + acceptedRequest
-    res.json({ threadId: req.params.id }); // FE will use request_id as thread id
+    const requestId = req.params.id;
+    const requesterId = await getRequesterbyRequest(requestId);
+
+    // create/upsert chat row
+    const chat: Chat = {
+      request_id: requestId,
+      requester_id: requesterId,
+      volunteer_id: volunteerId,
+    };
+    await upsertChat(chat);
+
+    // mark request as Ongoing + write acceptedRequest
+    await updateStatus(requestId, "Ongoing");
+
+    const accepted: AcceptedRequestInfo = {
+      request_id: requestId,
+      requester_id: requesterId,
+      volunteer_id: volunteerId,
+      request_status: "Ongoing",
+    };
+    await upsertAcceptedRequest(accepted);
+
+    res.json({ threadId: requestId }); // FE opens with request_id
   } catch (e: any) {
-    res.status(500).json({ error: e.message || "accept_failed" });
+    res.status(500).json({ error: e?.message || "accept_failed" });
+  }
+});
+
+// ---------- start/end: set start/end timestamps on AcceptedRequest ----------
+app.post("/api/events/:threadId/start", async (req: Request, res: Response) => {
+  try {
+    const requestId = req.params.threadId; // request_id
+    const chat = await getChatDetailsByReqId(requestId);
+    const accepted: AcceptedRequestInfo = {
+      request_id: requestId,
+      requester_id: chat.requester_id,
+      volunteer_id: chat.volunteer_id,
+      request_status: "Ongoing",
+      request_start_time: new Date(),
+    };
+    await upsertAcceptedRequest(accepted);
+    await updateStatus(requestId, "Ongoing");
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "start_failed" });
+  }
+});
+
+app.post("/api/events/:threadId/approve-start", async (req: Request, res: Response) => {
+  try {
+    const requestId = req.params.threadId;
+    const chat = await getChatDetailsByReqId(requestId);
+    const accepted: AcceptedRequestInfo = {
+      request_id: requestId,
+      requester_id: chat.requester_id,
+      volunteer_id: chat.volunteer_id,
+      request_status: "Ongoing",
+      request_start_time: new Date(),
+    };
+    await upsertAcceptedRequest(accepted); // idempotent upsert
+    await updateStatus(requestId, "Ongoing");
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "approve_start_failed" });
+  }
+});
+
+app.post("/api/events/:threadId/request-end", async (_req: Request, res: Response) => {
+  // optional: write a system message that volunteer requested to end
+  res.json({ ok: true });
+});
+
+app.post("/api/events/:threadId/approve-end", async (req: Request, res: Response) => {
+  try {
+    const requestId = req.params.threadId;
+    const chat = await getChatDetailsByReqId(requestId);
+    const accepted: AcceptedRequestInfo = {
+      request_id: requestId,
+      requester_id: chat.requester_id,
+      volunteer_id: chat.volunteer_id,
+      request_status: "Ongoing",
+      request_end_time: new Date(),
+    };
+    await upsertAcceptedRequest(accepted);
+    // (optionally) await updateStatus(requestId, "completed")
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "approve_end_failed" });
   }
 });
 
