@@ -2,9 +2,13 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import "dotenv/config";
+<<<<<<< Updated upstream
 // at the top of src/index.ts
 import { randomUUID } from "node:crypto"; // or: from "crypto"
 
+=======
+import { randomUUID } from 'crypto'
+>>>>>>> Stashed changes
 
 // controllers you already have
 import {

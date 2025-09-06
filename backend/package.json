@@ -13,15 +13,20 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "socket.io": "^4.8.1"
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.1",
+    "uuid": "^12.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
+    "@types/pg": "^8.15.5",
+    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
