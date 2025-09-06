@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 
 /* --- styles --- */
 import "./index.css";         // from the auth app
 import "./pwdIndex.css";      // from the PWD requests app
 
 /* --- auth/api helpers (from your auth app) --- */
-import { startPhoneSignIn, auth, logoutFirebase } from "./firebase";
+import { logoutFirebase } from "./firebase";
 import { getMe, updateMe } from "./api";
 
 /* --- requests UI (from your PWD app) --- */
@@ -34,12 +34,9 @@ function Btn({ children, ...props }) {
 /* ----------------- utilities (from auth app) -------------------- */
 const asE164 = (s) => (!s ? "" : s.startsWith("+") ? s : `+${s}`);
 const getSignedInPhone = () =>
-  auth.currentUser?.phoneNumber || localStorage.getItem("kk_phone") || "";
+  localStorage.getItem("kk_phone") || "";
 
 /* ---------------------- Requests Shell -------------------------- */
-/** This is your previous PWD “App” card, turned into a child component.
- * It renders inside the “home” screen after the user is signed in.
- */
 function RequestsShell() {
   const [view, setView] = useState("list");
 
@@ -88,78 +85,56 @@ function RequestsShell() {
 }
 
 /* ------------------------ Root App ------------------------------ */
-/** This preserves your phone auth + profile creation flow.
- * When screen === "home", it shows <RequestsShell />.
- */
 export default function App() {
-  // screens:
-  // landing | login_phone | login_otp
-  // signup_language | signup_phone | signup_otp
-  // create_profile | home
   const [screen, setScreen] = useState("landing");
 
   // auth state
   const [phone, setPhone] = useState(""); // E.164
-  const [code, setCode] = useState("");
-  const [confirmation, setConfirmation] = useState(null);
-
-  // profile state
   const [user, setUser] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  // sign-up language (we only support English now)
-  const [unavailableOpen, setUnavailableOpen] = useState(false);
 
   /* ------------- restore cached phone ------------------- */
   useEffect(() => {
     const cached = localStorage.getItem("kk_phone");
-    if (cached) setPhone(cached);
+    if (cached) {
+      setPhone(cached);
+      // Auto-login if phone exists in cache
+      handleLogin("home");
+    }
   }, []);
 
-  const resetAuthState = () => {
-    setCode("");
-    setConfirmation(null);
-  };
-
   /* ---------------- phone auth -------------------------- */
-  async function handleSendCode(nextScreen) {
+  async function handleLogin(nextScreen) {
     const p = asE164(phone);
     if (!p || p.length < 8) {
       alert("Enter phone in E.164 (e.g. +6591234567)");
       return;
     }
-    try {
-      const conf = await startPhoneSignIn(p);
-      setPhone(p);
-      setConfirmation(conf);
-      setScreen(nextScreen); // login_otp or signup_otp
-    } catch (err) {
-      console.error(err);
-      alert("Failed to send code");
+
+    // Replace with your phone verification logic
+    const authenticated = true; // Placeholder for actual phone verification
+    if (authenticated) {
+      setScreen(nextScreen);
+      localStorage.setItem("kk_phone", p);
+
+      // Load user profile
+      const me = await getMe(p).catch(() => null);
+      setUser(me);
+      
+      // If user doesn't have a profile, redirect to create profile
+      if (!me || !me.fullName) {
+        setScreen("create_profile");
+      }
+    } else {
+      alert("Failed to authenticate phone number");
     }
   }
 
-  async function handleVerify(nextScreen) {
-    if (!confirmation || !code) {
-      alert("Enter the 6-digit code");
-      return;
-    }
-    try {
-      const cred = await confirmation.confirm(code);
-      const p = cred.user.phoneNumber; // normalized E.164 from Firebase
-      setPhone(p);
-      localStorage.setItem("kk_phone", p);
-
-      // load existing profile if any
-      const me = await getMe(p).catch(() => null);
-      setUser(me);
-
-      setScreen(nextScreen); // "home" or "create_profile"
-      resetAuthState();
-    } catch (err) {
-      console.error(err);
-      alert("Invalid code");
-    }
+  async function handleLogout() {
+    localStorage.removeItem("kk_phone");
+    setUser(null);
+    setPhone("");
+    setScreen("landing");
   }
 
   /* ---------------- profile create/update ---------------- */
@@ -179,40 +154,34 @@ export default function App() {
       const age = ageVal ? Number(ageVal) : null;
       const address = (form.get("address") || "").trim();
 
+      console.log("Saving profile with:", { phone: p, fullName, age, address });
+
       const saved = await updateMe({
-        phone: p, // REQUIRED by the backend
+        phone: p,
         fullName,
         age,
         address,
         avatarUrl: null,
       });
 
+      console.log("Profile saved successfully:", saved);
       setUser(saved);
       setScreen("home");
+      
     } catch (err) {
-      console.error(err);
-      alert("Save failed");
+      console.error("Profile save error:", err);
+      // Show specific error message if available
+      const errorMessage = err.response?.data?.message || err.message || "Save failed";
+      alert(`Save failed: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleLogout() {
-    try {
-      await logoutFirebase();
-    } catch {}
-    localStorage.removeItem("kk_phone");
-    setUser(null);
-    setPhone("");
-    resetAuthState();
-    setScreen("landing");
-  }
-
   /* ------------------- screen blocks -------------------- */
   let content = null;
 
-  // (All the auth/profile screens are unchanged)
-  // Landing
+  // Landing screen
   if (screen === "landing") {
     content = (
       <Card>
@@ -231,7 +200,7 @@ export default function App() {
     );
   }
 
-  // Login → phone
+  // Login screen
   if (screen === "login_phone") {
     content = (
       <Card>
@@ -251,7 +220,7 @@ export default function App() {
           />
         </label>
 
-        <Btn onClick={() => handleSendCode("login_otp")}>Send Code</Btn>
+        <Btn onClick={() => handleLogin("home")}>Log in</Btn>
 
         <div className="mt-4">
           <button
@@ -265,30 +234,27 @@ export default function App() {
     );
   }
 
-  // Login → OTP
-  if (screen === "login_otp") {
+  // Signup language selection screen
+  if (screen === "signup_language") {
     content = (
       <Card>
-        <h1 className="text-xl font-semibold text-blue-600 mb-2">Verify Code</h1>
-        <p className="text-sm text-gray-600 mb-4">
-          We sent a verification code to <b>{phone}</b>
-        </p>
-        <label className="block text-sm text-gray-700 mb-4">
-          6-digit code
-          <input
-            className="mt-2 w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            inputMode="numeric"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          />
-        </label>
+        <h1 className="text-xl font-semibold text-blue-600 mb-6 text-center">
+          Select a language
+        </h1>
 
-        <div className="flex gap-3">
-          <Btn onClick={() => handleVerify("home")}>Continue</Btn>
+        <div className="space-y-4">
           <button
-            className="rounded-2xl px-5 py-3 font-medium bg-gray-200 text-gray-800 w-full"
-            onClick={() => setScreen("login_phone")}
+            className="w-full bg-white border rounded-xl shadow-sm px-4 py-3 text-left hover:shadow transition"
+            onClick={() => setScreen("signup_phone")}
+          >
+            English
+          </button>
+        </div>
+
+        <div className="mt-5">
+          <button
+            className="w-full rounded-2xl px-5 py-3 font-medium bg-gray-200 text-gray-800"
+            onClick={() => setScreen("landing")}
           >
             Back
           </button>
@@ -297,69 +263,16 @@ export default function App() {
     );
   }
 
-  // Signup → language (only English enabled)
-  if (screen === "signup_language") {
-    content = (
-      <>
-        <Card>
-          <h1 className="text-xl font-semibold text-blue-600 mb-6 text-center">
-            Select a language
-          </h1>
-
-          <div className="space-y-4">
-            <button
-              className="w-full bg-white border rounded-xl shadow-sm px-4 py-3 text-left hover:shadow transition"
-              onClick={() => setScreen("signup_phone")}
-            >
-              English
-            </button>
-
-            {["中文", "Melayu", "தமிழ்"].map((label) => (
-              <button
-                key={label}
-                className="w-full bg-white border rounded-xl shadow-sm px-4 py-3 text-left hover:shadow transition"
-                onClick={() => setUnavailableOpen(true)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-5">
-            <button
-              className="w-full rounded-2xl px-5 py-3 font-medium bg-gray-200 text-gray-800"
-              onClick={() => setScreen("landing")}
-            >
-              Back
-            </button>
-          </div>
-        </Card>
-
-        {unavailableOpen && (
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-6">
-            <Card>
-              <h2 className="text-lg font-semibold mb-3">Language unavailable</h2>
-              <p className="text-gray-600 mb-4">
-                This language is coming soon. Please use English for now.
-              </p>
-              <Btn onClick={() => setUnavailableOpen(false)}>OK</Btn>
-            </Card>
-          </div>
-        )}
-      </>
-    );
-  }
-
-  // Signup → phone
+  // Signup phone screen - FIXED: Only one definition
   if (screen === "signup_phone") {
     content = (
       <Card>
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-blue-600">KampungKaki</h1>
-          <p className="text-gray-500">Connecting volunteers with people in need</p>
+          <p className="text-gray-500">Create your account</p>
         </div>
 
-        <h2 className="text-blue-600 font-semibold mb-2">Sign up</h2>
+        <h2 className="text-blue-600 font-semibold mb-2">Sign Up</h2>
         <label className="block text-sm text-gray-700 mb-3">
           Mobile Number (E.164, e.g. +65XXXXXXXX)
           <input
@@ -367,10 +280,21 @@ export default function App() {
             placeholder="+65XXXXXXXX"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            required
           />
         </label>
 
-        <Btn onClick={() => handleSendCode("signup_otp")}>Send Code</Btn>
+        <Btn onClick={() => {
+          const p = asE164(phone);
+          if (!p || p.length < 8) {
+            alert("Enter phone in E.164 (e.g. +6591234567)");
+            return;
+          }
+          localStorage.setItem("kk_phone", p);
+          setScreen("create_profile");
+        }}>
+          Continue
+        </Btn>
 
         <div className="mt-4">
           <button
@@ -384,39 +308,7 @@ export default function App() {
     );
   }
 
-  // Signup → OTP
-  if (screen === "signup_otp") {
-    content = (
-      <Card>
-        <h1 className="text-xl font-semibold text-blue-600 mb-2">Verify Code</h1>
-        <p className="text-sm text-gray-600 mb-4">
-          We sent a verification code to <b>{phone}</b>
-        </p>
-        <label className="block text-sm text-gray-700 mb-4">
-          6-digit code
-          <input
-            className="mt-2 w-full rounded-xl border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            inputMode="numeric"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          />
-        </label>
-
-        <div className="flex gap-3">
-          <Btn onClick={() => handleVerify("create_profile")}>Continue</Btn>
-          <button
-            className="rounded-2xl px-5 py-3 font-medium bg-gray-200 text-gray-800 w-full"
-            onClick={() => setScreen("signup_phone")}
-          >
-            Back
-          </button>
-        </div>
-      </Card>
-    );
-  }
-
-  // Create Profile
+  // Create profile screen
   if (screen === "create_profile") {
     content = (
       <Card>
@@ -473,11 +365,10 @@ export default function App() {
     );
   }
 
-  // Home → render the combined Requests UI
+  // Home screen - shows the integrated RequestsShell
   if (screen === "home") {
     content = (
       <div className="max-w-4xl w-full">
-        {/* small signed-in header */}
         <div className="flex items-center justify-between mb-4">
           <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
             <span className="text-blue-600 text-xl">👤</span>
@@ -485,10 +376,8 @@ export default function App() {
           <span className="text-sm text-blue-600 font-medium">KampungKaki</span>
         </div>
 
-        {/* the PWD requests card */}
         <RequestsShell />
 
-        {/* account actions */}
         <div className="mt-6">
           <button
             className="rounded-2xl px-5 py-3 font-medium bg-gray-200 text-gray-800"
@@ -501,7 +390,6 @@ export default function App() {
     );
   }
 
-  /* -------- root wrapper + single recaptcha div ---------- */
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
       {content}

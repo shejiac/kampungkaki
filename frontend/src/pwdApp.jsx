@@ -2,7 +2,6 @@ import { useState } from "react";
 import RequestForm from "./components/requestform.jsx";
 import RequestList from "./components/RequestList.jsx";
 import "./pwdIndex.css";
-// remove import "./App.css"; if you don’t need the logo anymore
 
 
 function ErrorBoundary({ children }) {

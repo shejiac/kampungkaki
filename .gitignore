@@ -18,4 +18,5 @@ Thumbs.db
 
 # frontend envs
 /frontend/.env*
+/frontend/.env
 

@@ -3,9 +3,6 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import "dotenv/config";
 
-// side effects (Firebase init)
-import "./config/firebase";
-
 // routers/controllers
 import authRoutes from "./routes/auth";
 import {
@@ -93,10 +90,7 @@ process.on("SIGTERM", shutdown);
 
 // ---------- start ----------
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-  console.log(`🔗 API URL: http://localhost:${PORT}`);
-  console.log(
-    `🔥 Firebase Auth: ${process.env.AUTH_REQUIRED !== "false" ? "Enabled" : "Disabled (Dev Mode)"}`
-  );
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(`API URL: http://localhost:${PORT}`);
 });

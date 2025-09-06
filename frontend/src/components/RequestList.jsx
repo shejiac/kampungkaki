@@ -30,7 +30,7 @@ export default function RequestList({ onCreate, embed = false }) {
   const [q, setQ] = useState("");
 
   // must match the id used in RequestForm
-  const defaultUserId = "1b4e28ba-2fa1-11d2-883f-0016d3cca427";
+  const defaultUserId = "u1";
 
   const params = useMemo(() => {
   const p = new URLSearchParams();
@@ -113,17 +113,8 @@ export default function RequestList({ onCreate, embed = false }) {
         </div>
       )}
 
-      <div className="filters">
-        <label className="filter">
-          <span>Status</span>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All</option>
-            <option value="OPEN">OPEN</option>
-            <option value="ONGOING">ONGOING</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
-        </label>
-
+      {/* Filters row */}
+      <div className="filters-row">
         <input
           className="field"
           placeholder="Search title/description…"
@@ -131,10 +122,12 @@ export default function RequestList({ onCreate, embed = false }) {
           onChange={(e) => setQ(e.target.value)}
         />
 
+        <div className="spacer" />
         <button className="btn" onClick={load} type="button">
           Refresh
         </button>
       </div>
+
 
       {loading && (
         <ul className="list">

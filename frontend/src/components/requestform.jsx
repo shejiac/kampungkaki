@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import "./requestform.css";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function RequestForm({ onSuccess, onCancel }) {
-
   const [step, setStep] = useState(1);
 
   // core fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("OPEN");      // fixed OPEN
-  const [label, setLabel] = useState("");            // Tag (category)
-  const [urgency, setUrgency] = useState("");        // LOW | MEDIUM | HIGH
+  const [status, setStatus] = useState("OPEN");
+  const [label, setLabel] = useState("");
+  const [urgency, setUrgency] = useState("");
   const [location, setLocation] = useState("");
   const [initialMeet, setInitialMeet] = useState(false);
-  const [time, setTime] = useState("");              // Morning | Afternoon | Evening | Anytime | explicit datetime
-  const [duration, setDuration] = useState("");      // e.g. 2 hours
+  const [time, setTime] = useState("");
+  const [duration, setDuration] = useState("");
 
   // user
   const [username, setUsername] = useState("");
@@ -23,11 +23,8 @@ export default function RequestForm({ onSuccess, onCancel }) {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  
-
   useEffect(() => {
-    // replace with real session/user
-    const loggedInUser = { username: "JohnDoe", id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427" };
+    const loggedInUser = { username: "JohnDoe", id: "u1" };
     setUsername(loggedInUser.username);
     setUserId(loggedInUser.id);
   }, []);
@@ -36,43 +33,140 @@ export default function RequestForm({ onSuccess, onCancel }) {
     if (step === 1) return !!label;
     if (step === 2) return !!title && !!description;
     if (step === 3) return !!time;
-    if (step === 4) return !!urgency;
+    if (step === 4) return !!urgency && !!userId; // require userId by final step
     return true;
-  }, [step, label, title, description, time, urgency]);
+  }, [step, label, title, description, time, urgency, userId]);
 
   const progress = useMemo(() => (step / 4) * 100, [step]);
+
+  // ---- Helpers ----
+  const orNull = (v) => {
+    const s = typeof v === "string" ? v.trim() : v;
+    return s ? s : null;
+  };
+
+  // Convert common inputs to a Postgres-friendly INTERVAL string (HH:MM:SS)
+  // Accepts: "3 hours", "2h", "90 minutes", "1h 30m", "1:30", "01:30:00"
+  function toPgInterval(input) {
+    if (!input) return null;
+    const s = String(input).trim();
+    if (!s) return null;
+
+    // Already HH:MM or HH:MM:SS -> normalize to HH:MM:SS
+    if (/^\d{1,3}:\d{2}(:\d{2})?$/.test(s)) {
+      const parts = s.split(":");
+      if (parts.length === 2) return `${parts[0].padStart(2, "0")}:${parts[1]}:00`;
+      return `${parts[0].padStart(2, "0")}:${parts[1]}:${parts[2].padStart(2, "0")}`;
+    }
+
+    // Parse tokens like "1h 30m", "2h", "90m", "3 hours", "45 minutes", "1 day"
+    let days = 0, hours = 0, minutes = 0;
+
+    const d = s.match(/(\d+)\s*d(ays?)?/i);
+    if (d) days = parseInt(d[1], 10);
+
+    const h = s.match(/(\d+)\s*h(ours?)?/i);
+    if (h) hours = parseInt(h[1], 10);
+
+    const m = s.match(/(\d+)\s*m(in(ute)?s?)?/i);
+    if (m) minutes = parseInt(m[1], 10);
+
+    // Support compact "1h30m" without spaces
+    if (!h && !m) {
+      const compactH = s.match(/(\d+)h(\d+)?m?/i);
+      if (compactH) {
+        hours = parseInt(compactH[1], 10);
+        if (compactH[2]) minutes = parseInt(compactH[2], 10);
+      }
+    }
+
+    // Support pure number as minutes (e.g., "90")
+    if (!d && !h && !m && /^\d+$/.test(s)) {
+      minutes = parseInt(s, 10);
+    }
+
+    if (days === 0 && hours === 0 && minutes === 0) {
+      // Let Postgres parse natural text like "3 hours"
+      return s;
+    }
+
+    hours += days * 24;
+    const hh = String(hours).padStart(2, "0");
+    const mm = String(minutes).padStart(2, "0");
+    return `${hh}:${mm}:00`;
+  }
 
   async function submit(e) {
     e?.preventDefault?.();
     setMsg("");
-    if (!title || !userId) {
-      setMsg("Title and userId are required");
+
+    // Granular validation so you see exactly what's missing
+    const missing = [];
+    if (!title || !title.trim()) missing.push("title");
+    if (!userId) missing.push("userId");
+    if (missing.length) {
+      setMsg(`Missing: ${missing.join(", ")}`);
       return;
     }
+
     try {
       setSaving(true);
+
+      const requestId = uuidv4();
+
+      // Build payload using the snake_case keys your backend expects.
+      // Include optional fields ONLY when they are defined (avoid sending "").
+      const trimmedTitle = (title ?? "").trim();
+      const trimmedDescription = (description ?? "").trim();
+
+      const payload = {
+        // always include both names in case the server expects either
+        request_id: uuidv4(),
+        requester_id: userId,
+
+        // titles/descriptions: send BOTH snake_case and flat names, trimmed
+        request_title: trimmedTitle,
+        title: trimmedTitle,
+        request_description: trimmedDescription,
+        description: trimmedDescription,
+
+        request_status: status,
+        request_initial_meet: !!initialMeet,
+      };
+
+      // optional fields — only include if present
+      const request_type = orNull(label);
+      if (request_type) payload.request_type = request_type;
+
+      const request_priority = orNull(urgency);
+      if (request_priority) payload.request_priority = request_priority;
+
+      const request_location = orNull(location);
+      if (request_location) payload.request_location = request_location;
+
+      const isoTime = /^\d{4}-\d{2}-\d{2}T/.test(time) ? time : null;
+      if (isoTime) payload.request_time = isoTime;
+
+      const interval = toPgInterval(duration);
+      if (interval && String(interval).trim()) {
+        payload.request_approx_duration = interval; // e.g., "03:00:00" or "3 hours"
+      }
+
+      // debug what you actually send
+      console.log("Submitting payload:", payload);
+
+
+      // Optional: quick debug
+      // console.log("DEBUG payload", payload);
+
       const resp = await fetch("http://localhost:5000/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-        // common fields
-        title,
-        description,
-        username,
-        userId,
-        status,
-
-        // map UI fields -> DB columns
-        type: label || undefined,                // label -> type
-        priority: urgency || undefined,          // urgency -> priority
-        location: location || undefined,
-        initialMeet,                             // camelCase (DB uses initialMeet)
-        time: time || undefined,
-        approxDuration: duration || undefined,   // duration -> approxDuration
-      }),
+        body: JSON.stringify(payload),
       });
+
       if (!resp.ok) {
-        const err = await resp.json();
+        const err = await resp.json().catch(() => ({}));
         throw new Error(err.error || "Failed to save");
       }
 
@@ -88,8 +182,6 @@ export default function RequestForm({ onSuccess, onCancel }) {
       setDuration("");
       setStep(1);
       setMsg("Request saved!");
-
-      // return to list
       onSuccess?.();
     } catch (err) {
       setMsg(err.message);
@@ -116,7 +208,6 @@ export default function RequestForm({ onSuccess, onCancel }) {
             <div className="bar" style={{ width: `${progress}%` }} />
           </div>
         </div>
-        {/* Optional cancel to go back to list without posting */}
         <button type="button" className="btn" onClick={() => onCancel?.()}>
           Cancel
         </button>
@@ -340,7 +431,7 @@ export default function RequestForm({ onSuccess, onCancel }) {
             <button type="button" className="btn" onClick={() => setStep(3)}>
               Back
             </button>
-            <button type="submit" className="btn primary" disabled={saving}>
+            <button type="submit" className="btn primary" disabled={saving || !userId}>
               {saving ? "Posting…" : "Post Request"}
             </button>
           </div>

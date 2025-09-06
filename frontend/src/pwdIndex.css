@@ -1,44 +1,65 @@
 /* Make sure viewport fills */
-html, body, #root { height: 100%; margin: 0; }
+html, body, #root { 
+  height: 100%; 
+  margin: 0; 
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
 
-/* Full-viewport centering frame */
 .center-frame {
   min-height: 100vh;
-  display: grid;
-  place-items: center;       /* horizontal + vertical center */
-  background: #f3f4f6;       /* subtle backdrop */
-  padding: 16px;             /* keep card off screen edges on small devices */
-}
-
-/* The centered card */
-.app-card {
-  width: min(820px, 92vw);   /* narrower look */
-  height: min(80vh, 760px);  /* fixed max height */
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-  display: flex;
-  flex-direction: column;    /* header + content */
-  overflow: hidden;          /* clip inner scrolling to rounded corners */
-}
-
-/* Fixed card header */
-.app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
+  justify-content: center;
+  background: #f3f4f6;
+  padding: 20px;
+}
+
+/* Phone card */
+.app-card {
+  width: min(480px, 92vw);
+  height: min(880px, 92vh);   /* fixed phone height, responsive */
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Scroll only inside the phone */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+
+  padding: 10px 10px 10px; /* extra top padding for breathing space */
   border-bottom: 1px solid #eef2f7;
   background: #fff;
 }
 
-/* Brand heading font matches app text */
 .brand {
-  font-family: inherit;   /* uses same stack as body */
-  font-weight: 700;       /* keep it bold */
-  font-size: 1.8rem;      /* slightly smaller than default h1 */
   margin: 0;
+  font-weight: 700;
+  font-size: 1.35rem; /* a bit smaller than before */
+  line-height: 1.2;   /* tighter line-height so it sits well vertically */
 }
+
+.app-header .btn {
+  margin-left: 12px;   /* small gap from the title */
+  padding: 0 16px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
 
 /* Force all text elements to use the same font stack */
 body, input, textarea, button, select,
@@ -46,20 +67,65 @@ h1, h2, h3, h4, h5, h6 {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif !important;
 }
 
-
-
-
-/* Scrollable inside area */
-.app-content {
-  flex: 1;
-  overflow: auto;
-  padding: 16px 20px 20px;
-}
-
-/* Buttons reused */
+/* Buttons */
 .btn {
-  height: 40px; padding: 0 14px;
-  border-radius: 12px; border: 1px solid #e5e7eb;
-  background: #fff; font-weight: 600; cursor: pointer;
+  height: 40px; 
+  padding: 0 14px;
+  border-radius: 12px; 
+  border: 1px solid #e5e7eb;
+  background: #fff; 
+  font-weight: 600; 
+  cursor: pointer;
+  font-size: 0.9rem; /* Slightly smaller text on buttons */
 }
-.btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+
+.btn.primary { 
+  background: #2563eb; 
+  border-color: #2563eb; 
+  color: #fff; 
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 12px 16px;
+  }
+  
+  .brand {
+    font-size: 1.3rem;
+  }
+  
+  .app-content {
+    padding: 12px 16px 16px;
+  }
+  
+  .btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Optional: Add phone frame for visual effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 12px solid #222;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 1000;
+  box-sizing: border-box;
+  display: none; /* Hidden by default */
+}
+
+/* Class to show phone frame when needed */
+.phone-frame::before {
+  display: block;
+}
+
+
+

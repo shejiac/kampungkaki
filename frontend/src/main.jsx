@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 // Use the combined root App (auth + requests shell)
-import App from "./App.jsx";
+import App from "./pwdApp.jsx";
 
 // Global styles used by the auth flow
 import "./index.css";      // from the auth app
