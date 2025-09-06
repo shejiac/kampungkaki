@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import "./requestlist.css";
 import { API } from "../api";
 
-const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
 const USER_ID = "1b4e28ba-2fa1-11d2-883f-0016d3cca427"; // <-- must exist in t_users
 
 // case-insensitive equals

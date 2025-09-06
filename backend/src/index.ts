@@ -2,13 +2,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import "dotenv/config";
-import { randomUUID } from "crypto";
 
 // controllers you already have
 import {
   createRequest,
   viewRequests,
-  // DO NOT import acceptRequest controller; we implement accept below to return {threadId}
+  acceptRequest,
 } from "./controllers/pwdRequestController";
 
 // DB pool for health checks & shutdown
