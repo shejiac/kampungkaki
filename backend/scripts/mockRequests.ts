@@ -19,7 +19,7 @@ console.log("Environment variables:", {
 export const mockRequests: RequestInfo[] = [
   {
     request_id: uuidv4(),  // Fixed request ID for consistency
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: undefined,  
     request_title: "Grocery Shopping Help",
     request_type: "Shopping",
@@ -35,7 +35,7 @@ export const mockRequests: RequestInfo[] = [
   },
   {
     request_id: uuidv4(),  // Fixed request ID for consistency
-    requester_id: "u1", 
+    requester_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     volunteer_id: undefined, 
     request_title: "Doctor’s Appointment Escort",
     request_type: "Medical",

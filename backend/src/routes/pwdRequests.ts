@@ -9,7 +9,7 @@ import { pool } from "../config/database";
 const router = Router();
 
 // Hardcoded default user ID (existing behavior preserved)
-const defaultUserId = "u1";
+const defaultUserId = "1b4e28ba-2fa1-11d2-883f-0016d3cca427";
 
 function toUiRow(r: RequestInfo) {
   return {

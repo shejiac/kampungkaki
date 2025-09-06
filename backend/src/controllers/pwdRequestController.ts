@@ -19,7 +19,7 @@ type RequestBody = {
   status?: string;     // free-form; we coerce
 };
 
-const DEFAULT_USER_ID = "u1";
+const DEFAULT_USER_ID = "1b4e28ba-2fa1-11d2-883f-0016d3cca427";
 
 // TitleCase canonical statuses from your types
 const CANON: ReadonlyArray<RequestStatus> = ["Open", "Ongoing", "Closed"] as const;

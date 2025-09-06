@@ -6,7 +6,7 @@ const cases = [
   {
     name: "Send grocery chat message",
     chatId: "11111111-1111-1111-1111-111111111111",
-    senderId: "u1",
+    senderId: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",
     message: "Hi, just checking if you're still available to help?",
   },
   {

@@ -4,7 +4,7 @@ import type { ChatListItem } from "../src/types/chats";
 import logger from "../src/helpers/db/logger";
 
 const cases = [
-  { name: "Inbox for Requester u1", userId: "u1" },
+  { name: "Inbox for Requester 1b4e28ba-2fa1-11d2-883f-0016d3cca427", userId: "1b4e28ba-2fa1-11d2-883f-0016d3cca427" },
   { name: "Inbox for Volunteer u2", userId: "u2" },
   { name: "Inbox for Mixed user u3", userId: "u3" },
 ];

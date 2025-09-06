@@ -5,7 +5,7 @@ export const mockChatMessages: ChatMessage[] = [
 
   {
     chat_id: "6018722c-be5a-46a2-a64b-0625986c7caa",
-    sender_id: "u1", 
+    sender_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427", 
     message_type: "user",
     body: "Hi Jason, thanks for volunteering to help with groceries!",
     created_at: new Date("2025-03-01T09:05:00Z"),

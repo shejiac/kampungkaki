@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import "./requestlist.css";
 
 const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
+const USER_ID = "1b4e28ba-2fa1-11d2-883f-0016d3cca427"; // <-- must exist in t_users
+
 // case-insensitive equals
 const eq = (a, b) => String(a || "").toUpperCase() === String(b || "").toUpperCase();
 
@@ -15,6 +17,29 @@ const LABEL_MAP = {
 };
 const prettyLabel = (v) => LABEL_MAP[v] || v || "—";
 const urgencyClass = (u) => (u ? String(u).toLowerCase() : "");
+
+// normalize a row whether backend returns snake_case or camelCase
+function normalizeRow(r) {
+  // prefer existing UI shape; otherwise map snake_case
+  return {
+    id: r.id ?? r.request_id ?? r.requestId ?? null,
+    userId: r.userId ?? r.requester_id ?? r.requesterId ?? null,
+    title: r.title ?? r.request_title ?? r.requestTitle ?? "",
+    description: r.description ?? r.request_description ?? r.requestDescription ?? "",
+    type: r.type ?? r.request_type ?? r.requestType ?? null,
+    location: r.location ?? r.request_location ?? r.requestLocation ?? null,
+    initialMeet: (r.initialMeet ?? r.request_initial_meet ?? r.initial_meet) ?? false,
+    time: r.time ?? r.request_time ?? null,
+    approxDuration: r.approxDuration ?? r.request_approx_duration ?? r.requestApproxDuration ?? null,
+    priority: r.priority ?? r.request_priority ?? r.requestPriority ?? null,
+    status: r.status ?? r.request_status ?? r.requestStatus ?? "",
+
+    // optional extras the UI knows how to show if present
+    user: r.user ?? null,
+    distance: r.distance ?? null,
+  };
+}
+
 const getLabel = (r) => r.label ?? r.type ?? r.tag ?? r.category ?? null;
 const getUrgency = (r) => r.urgency ?? r.priority ?? null;
 const getDuration = (r) => r.duration ?? r.approxDuration ?? r.expected_duration ?? null;
@@ -25,20 +50,16 @@ export default function RequestList({ onCreate, embed = false }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // tip: set "" to show all by default while debugging
+  // set "" to show all by default while debugging
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
 
-  // must match the id used in RequestForm
-  const defaultUserId = "u1";
-
   const params = useMemo(() => {
-  const p = new URLSearchParams();
-  if (q) p.set("q", q);
-  p.set("userId", defaultUserId);
-  return p.toString();
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    p.set("userId", USER_ID);
+    return p.toString();
   }, [q]);
-
 
   useEffect(() => {
     load();
@@ -50,13 +71,23 @@ export default function RequestList({ onCreate, embed = false }) {
     setErr("");
     try {
       const resp = await fetch(`${API}/api/requests?${params}`);
-      if (!resp.ok) throw new Error((await resp.json()).error || "Failed to fetch");
+      if (!resp.ok) {
+        let msg = "Failed to fetch";
+        try {
+          const j = await resp.json();
+          msg = j?.error || msg;
+        } catch (_) {}
+        throw new Error(msg);
+      }
       const data = await resp.json();
 
-      setAllRows(data);
-      setRows(applyClientFilters(data, { status, q }));
+      // normalize everything
+      const normalized = (Array.isArray(data) ? data : []).map(normalizeRow);
+
+      setAllRows(normalized);
+      setRows(applyClientFilters(normalized, { status, q }));
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || String(e));
     } finally {
       setLoading(false);
     }
@@ -68,29 +99,41 @@ export default function RequestList({ onCreate, embed = false }) {
     setRows(applyClientFilters(allRows, { status, q }));
   }, [status, q, allRows]);
 
- function applyClientFilters(list, { q }) {
-    const qNorm = q.trim().toLowerCase();
-    return list.filter((r) => {
-        return qNorm
-        ? (r.title || "").toLowerCase().includes(qNorm) ||
-            (r.description || "").toLowerCase().includes(qNorm)
-        : true;
+  function applyClientFilters(list, { status, q }) {
+    const qNorm = (q || "").trim().toLowerCase();
+    const sNorm = (status || "").trim().toUpperCase();
+
+    return list.filter((r0) => {
+      const r = normalizeRow(r0); // safe even if already normalized
+
+      // status filter (no-op if status is "")
+      const statusOk = !sNorm || eq(r.status, sNorm);
+
+      // text search
+      const text =
+        (r.title || "").toLowerCase() +
+        " " +
+        (r.description || "").toLowerCase();
+      const qOk = !qNorm || text.includes(qNorm);
+
+      return statusOk && qOk;
     });
-    }
- function formatDateTime(dt) {
+  }
+
+  function formatDateTime(dt) {
     if (!dt) return "";
     const d = new Date(dt);
     if (isNaN(d)) return dt; // fallback if it's not a valid date
     return d.toLocaleString("en-SG", {
-        weekday: "short",    // "Wed"
-        year: "numeric",     // "2025"
-        month: "short",      // "Sep"
-        day: "numeric",      // "10"
-        hour: "2-digit",     // "06 AM"
-        minute: "2-digit",   // "29"
-        hour12: true,        // 12h format with AM/PM
+      weekday: "short", // Wed
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
-    }
+  }
 
   const statusBadge = (s) => <span className={`badge ${s}`}>{s}</span>;
   const chip = (text, kind = "default") =>
@@ -122,12 +165,20 @@ export default function RequestList({ onCreate, embed = false }) {
           onChange={(e) => setQ(e.target.value)}
         />
 
+        {/* (Optional) add a basic status filter dropdown later if you want */}
+        {/* <select className="field" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">All statuses</option>
+          <option value="OPEN">OPEN</option>
+          <option value="ACCEPTED">ACCEPTED</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select> */}
+
         <div className="spacer" />
         <button className="btn" onClick={load} type="button">
           Refresh
         </button>
       </div>
-
 
       {loading && (
         <ul className="list">
@@ -154,106 +205,89 @@ export default function RequestList({ onCreate, embed = false }) {
         </div>
       )}
 
-        <ul className="list">
-        {rows.map((r) => {
-            const label = getLabel(r);
-            const urgency = getUrgency(r);
-            const initial =
+      <ul className="list">
+        {rows.map((r0) => {
+          const r = normalizeRow(r0);
+          const label = getLabel(r);
+          const urgency = getUrgency(r);
+          const initial =
             r.user?.displayName?.trim()?.charAt(0)?.toUpperCase() ??
             r.user?.email?.trim()?.charAt(0)?.toUpperCase() ??
             r.title?.trim()?.charAt(0)?.toUpperCase() ??
             "•";
 
-            return (
-            <li key={r.id} className="card card-compact">
-                <div className="row">
+          return (
+            <li key={r.id || r.title} className="card card-compact">
+              <div className="row">
                 {/* left avatar */}
                 <div className="avatar">{initial}</div>
 
                 {/* right content */}
                 <div>
-                    {/* title + top-right chips */}
-                    <div className="card-head">
-                    <strong className="card-title">{r.title}</strong>
+                  {/* title + top-right chips */}
+                  <div className="card-head">
+                    <strong className="card-title">{r.title || "(untitled)"}</strong>
 
                     <div className="badges">
-                        {label && (
-                        <span className="chip label">{prettyLabel(label)}</span>
-                        )}
-                        {urgency && (
-                        <span
-                            className={`chip priority ${String(
-                            urgency
-                            ).toLowerCase()}`}
-                        >
-                            {urgency}
-                        </span>
-                        )}
+                      {label && <span className="chip label">{prettyLabel(label)}</span>}
+                      {urgency && (
+                        <span className={`chip priority ${urgencyClass(urgency)}`}>{urgency}</span>
+                      )}
                     </div>
-                    </div>
+                  </div>
 
-                    {/* optional status badge (if you want it visible) */}
-                    {r.status && (
+                  {/* optional status badge */}
+                  {r.status && (
                     <div className="badges" style={{ marginTop: 6 }}>
-                        {statusBadge(r.status)}
+                      {statusBadge(r.status)}
                     </div>
-                    )}
+                  )}
 
-                    {/* description */}
-                    {r.description && <p className="desc">{r.description}</p>}
+                  {/* description */}
+                  {r.description && <p className="desc">{r.description}</p>}
 
-                    {/* meta row */}
-                    <div className="meta">
+                  {/* meta row */}
+                  <div className="meta">
                     {r.location && (
-                        <span className="meta-item">
+                      <span className="meta-item">
                         📍{" "}
                         <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                             r.location
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
-                            {r.location}
+                          {r.location}
                         </a>
-                        </span>
+                      </span>
                     )}
 
-                    {r.time && (
-                        <span className="meta-item">🕒 {formatDateTime(r.time)}</span>
-                    )}
+                    {r.time && <span className="meta-item">🕒 {formatDateTime(r.time)}</span>}
 
-                    {getDuration(r) && (
-                        <span className="meta-item">⏱ {getDuration(r)}</span>
-                    )}
+                    {getDuration(r) && <span className="meta-item">⏱ {getDuration(r)}</span>}
 
-                    {(r.initialMeet ?? r.initial_meet) && (
-                        <span className="meta-item">🤝 Initial Meeting Needed</span>
-                    )}
+                    {r.initialMeet && <span className="meta-item">🤝 Initial Meeting Needed</span>}
 
                     <span className="spacer" />
 
-                    {r.distance && (
-                        <span className="meta-item">{r.distance} km away</span>
-                    )}
-                    </div>
+                    {r.distance && <span className="meta-item">{r.distance} km away</span>}
+                  </div>
 
-                    {/* footer */}
-                    {r.user && (
+                  {/* footer */}
+                  {r.user && (
                     <div className="footer">
-                        <span className="by">
+                      <span className="by">
                         by {r.user.displayName} ({r.user.email})
-                        </span>
+                      </span>
                     </div>
-                    )}
+                  )}
                 </div>
-                </div>
+              </div>
             </li>
-            );
+          );
         })}
-        </ul>
-
-
+      </ul>
     </section>
   );
 }

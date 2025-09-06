@@ -10,7 +10,7 @@ console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
 
 export const mockUsers: User[] = [
   {
-    user_id: "u1",
+    user_id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",
     user_name: "Karen Wong",
     phone_number: "+6591234567",
     home_address: "Blk 123 Ang Mo Kio Ave 5 #05-12",

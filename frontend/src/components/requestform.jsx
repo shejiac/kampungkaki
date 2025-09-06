@@ -24,7 +24,7 @@ export default function RequestForm({ onSuccess, onCancel }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const loggedInUser = { username: "JohnDoe", id: "u1" };
+    const loggedInUser = { username: "JohnDoe", id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427" };
     setUsername(loggedInUser.username);
     setUserId(loggedInUser.id);
   }, []);
