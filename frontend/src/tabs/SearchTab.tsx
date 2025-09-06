@@ -5,9 +5,9 @@ type Req = {
   request_id: string;
   requester_id?: string;
   volunteer_id?: string | null;
-  request_status?: string;     // 'open' | 'pending' | 'ongoing' | 'completed' | etc
-  title?: string;              // some schemas use 'title'
-  request_title?: string;      // fallback in case your schema differs
+  request_status?: string;
+  title?: string;
+  request_title?: string;
   description?: string;
   request_description?: string;
   location?: string;
@@ -24,8 +24,8 @@ export default function SearchTab({
   onAccepted,
 }: {
   userId: string;
-  isVolunteer: boolean;                 // volunteer can accept
-  onAccepted: (threadId: string) => void; // open Messages with this request_id
+  isVolunteer: boolean;                  // only volunteers see “I’ll Help!”
+  onAccepted: (threadId: string) => void;
 }) {
   const [items, setItems] = useState<Req[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,8 +35,11 @@ export default function SearchTab({
     setLoading(true);
     setErr(null);
     try {
-      // Your controller supports GET /api/requests
-      const r = await fetch(`${API}/api/requests`);
+      // IMPORTANT: include X-User-Id so backend can exclude “my own” requests
+      const r = await fetch(`${API}/api/requests`, {
+        headers: { "X-User-Id": userId },
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       const list: Req[] = Array.isArray(d) ? d : (d.requests || d.data || []);
       setItems(list);
@@ -46,15 +49,15 @@ export default function SearchTab({
       setLoading(false);
     }
   }
-  useEffect(() => { load(); }, []);
 
-  // show only requests that look "open-ish"
+  // reload if the userId changes (e.g., you toggle users in Dev controls)
+  useEffect(() => { load(); }, [userId]);
+
   const openRequests = useMemo(() => {
     return (items || []).filter((it) => {
       const status = (it.request_status || "").toLowerCase();
-      // treat undefined or 'open'/'pending' as accept-able
       const looksOpen = !status || status === "open" || status === "pending";
-      const notTaken = !it.volunteer_id; // if present and null/undefined means unassigned
+      const notTaken = !it.volunteer_id;
       return looksOpen && notTaken;
     });
   }, [items]);
@@ -71,7 +74,7 @@ export default function SearchTab({
       return;
     }
     const d = await r.json().catch(() => ({}));
-    onAccepted(d.threadId || id); // backend usually returns {threadId}; fall back to id
+    onAccepted(d.threadId || id);
   }
 
   return (
@@ -107,8 +110,8 @@ export default function SearchTab({
         {openRequests.map((it) => {
           const title = it.title || it.request_title || "Untitled request";
           const desc = it.description || it.request_description || "";
-          const location = it.location || it.address;
-          const time = it.time || it.requested_time;
+          const location = it.location || it.address || "";
+          const time = it.time || it.requested_time || "";
 
           return (
             <div
@@ -175,10 +178,7 @@ export default function SearchTab({
 
               {isVolunteer ? (
                 <button
-                  onClick={() => {
-  console.log("Request ID:", it.request_id);
-  accept(it.request_id);
-}}
+                  onClick={() => accept(it.request_id)}
                   style={{
                     width: "100%",
                     padding: 12,

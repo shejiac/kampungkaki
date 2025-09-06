@@ -11,6 +11,10 @@ import {
   viewRequests,
   acceptRequest,
 } from "./controllers/pwdRequestController";
+import { acceptRequest as acceptRequestHelper } from "./helpers/chat/mainChatHelpers";
+import { getRequestbyRequestId } from "./helpers/chat/getRequestByRequestId";
+import { upsertChatMessage } from "./helpers/chat/upsertChatMessage";
+import { getAllRequestDetails } from "./helpers/volunteer/getAllRequestDetails"; 
 
 // history + stats helpers
 import { getAllPastRequests } from "./helpers/pwd/getAllPreviousRequests"; 
@@ -29,14 +33,10 @@ import { getRequestsByUserId } from "./helpers/chat/getRequestsByUserId";
 import { getChatMessages, getLastChatMessage } from "./helpers/chat/getChatMessages";
 import { getRequesterbyRequest } from "./helpers/chat/getRequesterByRequestId";
 import { upsertChat } from "./helpers/chat/upsertChat";
-import { upsertChatMessage } from "./helpers/chat/upsertChatMessage";
 import { upsertAcceptedRequest } from "./helpers/chat/upsertAcceptedRequest";
 import { updateStatus } from "./helpers/chat/updateStatus";
 import type { Chat } from "./types/chats";
 import type { AcceptedRequestInfo } from "./types/request";
-import { acceptRequest as acceptRequestHelper, systemCreateMessage } from "./helpers/chat/mainChatHelpers";
-import { getRequestbyRequestId } from "./helpers/chat/getRequestByRequestId";
-
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -119,6 +119,49 @@ app.get("/api/threads", async (req, res) => {
   }
 });
 
+app.get("/api/requests/mine", async (req, res) => {
+  const userId = req.header("X-User-Id");
+  if (!userId) return res.status(401).json({ error: "Missing X-User-Id" });
+  const rows = await getRequestbyRequestId(userId);
+  res.json({ requests: rows });
+});
+
+
+app.get("/api/requests", async (req, res) => {
+  try {
+    const userId = req.header("X-User-Id") || null;
+
+    const rows: any[] = await getAllRequestDetails(); // your helper
+    const list = (rows || [])
+      .filter(r => {
+        const st = String(r.request_status || "").toLowerCase();
+        const openish = !st || st === "open" || st === "pending";
+        const notTaken = !r.volunteer_id;                 // unassigned
+        const notMine  = userId ? r.requester_id !== userId : true; // not my own
+        return openish && notTaken && notMine;
+      })
+      .map(r => ({
+        request_id: r.request_id || r.id,
+        requester_id: r.requester_id,
+        volunteer_id: r.volunteer_id ?? null,
+        request_status: r.request_status ?? "open",
+        // normalize common fields so FE doesn't care about schema drift
+        title: r.title ?? r.request_title ?? "Untitled request",
+        request_title: r.request_title ?? r.title ?? null,
+        description: r.description ?? r.request_description ?? "",
+        request_description: r.request_description ?? r.description ?? "",
+        location: r.request_location ?? r.location ?? r.address ?? "",
+        time: r.request_time ?? r.requested_time ?? r.start_time ?? "",
+        urgency: r.request_priority ?? r.urgency ?? "",
+        label: r.request_type ?? r.label ?? "",
+      }));
+
+    res.json({ requests: list });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "requests_failed" });
+  }
+});
+
 // ---------- thread details: param is request_id ----------
 app.get("/api/threads/:threadId", async (req, res) => {
   try {
@@ -178,42 +221,50 @@ app.post("/api/messages", async (req, res) => {
 });
 
 // ---------- accept request: create chat + acceptedRequest, return {threadId} ----------
-app.post("/api/requests/:id/accept", async (req: Request, res: Response) => {
+// Volunteer accepts → create chat, write system message, return request_id for FE
+app.post("/api/requests/:id/accept", async (req, res) => {
   try {
     const volunteerId = req.header("X-User-Id");
     if (!volunteerId) return res.status(401).json({ error: "Missing X-User-Id" });
 
     const requestId = req.params.id;
-    // creates/updates chat + marks accepted; returns the DB chat_id
-    const chatId = await acceptRequestHelper(requestId, volunteerId);
 
-    // Build the “old style” system message from request details
-    const r = await getRequestbyRequestId(requestId as string);
-    const title = r?.request_title || r?.title || "Request";
-    const where = r?.request_location || r?.address || r?.location || "";
-    const whenRaw = r?.request_time || r?.requested_time || r?.start_time;
-    const when =
-      whenRaw
-        ? new Date(whenRaw).toLocaleString("en-SG", {
-            weekday: "short", day: "numeric", month: "short",
-            hour: "numeric", minute: "2-digit",
-          })
-        : "";
+    // 1) create/mark accepted (your helper does: upsertChat + upsert accepted_request + update status)
+    const chatId = await acceptRequestHelper(requestId, volunteerId); // returns chat_id
 
-    const body =
+    // 2) build the “old style” system message from whatever fields exist in DB
+    const r = await getRequestbyRequestId(requestId);
+
+    const first = (...vals: any[]) => vals.find(v => v !== undefined && v !== null && v !== "");
+    const title = first((r as any)?.request_title, (r as any)?.title, "Request");
+    const where = first((r as any)?.request_location, (r as any)?.location, (r as any)?.address, "");
+    const whenRaw = first((r as any)?.request_time, (r as any)?.requested_time, (r as any)?.start_time);
+    const when = whenRaw
+      ? new Date(whenRaw).toLocaleString("en-SG", {
+          weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
+        })
+      : "";
+
+    const sysBody =
       `👋 A volunteer wants to accept your request: ${title}` +
       (where ? ` • Where: ${where}` : "") +
       (when ? ` • When: ${when}` : "");
 
-    // message_type = 'system' (helper sets this)
-    await systemCreateMessage(chatId, volunteerId, body);
+    // 3) save system message into the new chat
+    await upsertChatMessage({
+      chat_id: chatId,
+      sender_id: (r as any)?.requester_id || null, // ok to attribute to requester
+      message_type: "system",
+      body: sysBody,
+    } as any);
 
-    // FE treats threadId as request_id
+    // 4) FE expects threadId === request_id (do NOT change this)
     res.json({ threadId: requestId });
   } catch (e: any) {
     res.status(500).json({ error: e?.message || "accept_failed" });
   }
 });
+
 
 // ---------- start/end: set start/end timestamps on AcceptedRequest ----------
 app.post("/api/events/:threadId/start", async (req: Request, res: Response) => {
