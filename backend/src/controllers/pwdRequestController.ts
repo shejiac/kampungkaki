@@ -79,7 +79,7 @@ function toRequestInfo(body: RequestBody = {}, existing: Partial<RequestInfo> = 
 /** Map domain → UI row */
 function toUiRow(r: RequestInfo) {
   return {
-    id: r.request_id,
+    request_id: r.request_id,
     userId: r.requester_id,
     title: r.request_title,
     description: r.request_description,
