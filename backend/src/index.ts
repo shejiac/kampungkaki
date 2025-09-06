@@ -34,6 +34,9 @@ import { upsertAcceptedRequest } from "./helpers/chat/upsertAcceptedRequest";
 import { updateStatus } from "./helpers/chat/updateStatus";
 import type { Chat } from "./types/chats";
 import type { AcceptedRequestInfo } from "./types/request";
+import { acceptRequest as acceptRequestHelper, systemCreateMessage } from "./helpers/chat/mainChatHelpers";
+import { getRequestbyRequestId } from "./helpers/chat/getRequestByRequestId";
+
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -175,7 +178,42 @@ app.post("/api/messages", async (req, res) => {
 });
 
 // ---------- accept request: create chat + acceptedRequest, return {threadId} ----------
-app.post("/api/requests/:id/accept", acceptRequest); 
+app.post("/api/requests/:id/accept", async (req: Request, res: Response) => {
+  try {
+    const volunteerId = req.header("X-User-Id");
+    if (!volunteerId) return res.status(401).json({ error: "Missing X-User-Id" });
+
+    const requestId = req.params.id;
+    // creates/updates chat + marks accepted; returns the DB chat_id
+    const chatId = await acceptRequestHelper(requestId, volunteerId);
+
+    // Build the “old style” system message from request details
+    const r = await getRequestbyRequestId(requestId as string);
+    const title = r?.request_title || r?.title || "Request";
+    const where = r?.request_location || r?.address || r?.location || "";
+    const whenRaw = r?.request_time || r?.requested_time || r?.start_time;
+    const when =
+      whenRaw
+        ? new Date(whenRaw).toLocaleString("en-SG", {
+            weekday: "short", day: "numeric", month: "short",
+            hour: "numeric", minute: "2-digit",
+          })
+        : "";
+
+    const body =
+      `👋 A volunteer wants to accept your request: ${title}` +
+      (where ? ` • Where: ${where}` : "") +
+      (when ? ` • When: ${when}` : "");
+
+    // message_type = 'system' (helper sets this)
+    await systemCreateMessage(chatId, volunteerId, body);
+
+    // FE treats threadId as request_id
+    res.json({ threadId: requestId });
+  } catch (e: any) {
+    res.status(500).json({ error: e?.message || "accept_failed" });
+  }
+});
 
 // ---------- start/end: set start/end timestamps on AcceptedRequest ----------
 app.post("/api/events/:threadId/start", async (req: Request, res: Response) => {

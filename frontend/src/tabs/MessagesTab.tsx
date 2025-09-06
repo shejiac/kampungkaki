@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import ChatRoom from './ChatRoom'
+import { API as BASE } from '../api'                // http://localhost:5000
+import ChatRoom from '../chat/ChatRoom'             // <-- adjust path if needed
 
 type User = { id: string; pwd: boolean }
 type Thread = {
@@ -24,12 +25,12 @@ export default function Messages({
   ui?: 'light-mobile' | 'dark'
   apiBase?: string
 }) {
+  const baseUrl = apiBase || BASE
+
   const [threads, setThreads] = useState<Thread[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-
-  const API = apiBase || (import.meta as any).env?.VITE_API_ORIGIN || 'http://localhost:5000'
 
   useEffect(() => {
     if (preopenThreadId) {
@@ -42,7 +43,7 @@ export default function Messages({
   async function load() {
     setLoading(true); setErr(null)
     try {
-      const r = await fetch(`${API}/api/threads`, { headers: { 'X-User-Id': user.id } })
+      const r = await fetch(`${baseUrl}/api/threads`, { headers: { 'X-User-Id': user.id } })
       const d = await r.json()
       setThreads(Array.isArray(d) ? d : (d.threads || []))
     } catch (e: any) {
@@ -51,9 +52,8 @@ export default function Messages({
       setLoading(false)
     }
   }
-  useEffect(() => { load() }, [user.id])
+  useEffect(() => { load() }, [user.id, baseUrl])
 
-  // LIGHT MOBILE (single column, slide)
   const showChat = !!selected
 
   return (
@@ -67,11 +67,13 @@ export default function Messages({
       >
         <div style={{ fontSize: 20, fontWeight: 700, margin: 0, flex: 1 }}>My Messages</div>
 
-        {loading && <div style={{ color:'#6B7280' }}>Loading…</div>}
-        {err && <div style={{ color:'#ef4444' }}>{err}</div>}
-        {!loading && !err && threads.length === 0 && (
-          <div style={{ color:'#6B7280' }}>No conversations yet</div>
-        )}
+        <div style={{ marginTop: 8 }}>
+          {loading && <div style={{ color:'#6B7280' }}>Loading…</div>}
+          {err && <div style={{ color:'#ef4444' }}>{err}</div>}
+          {!loading && !err && threads.length === 0 && (
+            <div style={{ color:'#6B7280' }}>No conversations yet</div>
+          )}
+        </div>
 
         <div style={{ display:'grid', gap:8 }}>
           {threads.map(t => (
@@ -122,10 +124,10 @@ export default function Messages({
 
         {selected && (
           <ChatRoom
-            threadId={selected}
+            threadId={selected}          // request_id
             user={user}
             ui="light-mobile"
-            apiBase={API}
+            apiBase={baseUrl}
           />
         )}
       </div>

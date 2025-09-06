@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
+import { API as BASE } from '../api'   // e.g. http://localhost:5000
 
 type User = { id: string; pwd: boolean }
 type Msg = {
   id: string
   sender_id: string | null
   body: string
-  kind: 'user'|'system'
+  kind: 'user' | 'system'
   created_at: string
 }
 
 export default function ChatRoom({
   apiBase,
   user,
-  threadId,
+  threadId,                     // NOTE: this is the request_id (your BE maps -> chat_id)
   ui = 'light-mobile',
 }: {
   apiBase?: string
@@ -20,49 +21,66 @@ export default function ChatRoom({
   threadId: string | null
   ui?: 'light-mobile' | 'dark'
 }) {
-  const API = apiBase || (import.meta as any).env?.VITE_API_ORIGIN || 'http://localhost:5000'
+  const baseUrl = apiBase || BASE            // final base, e.g. http://localhost:5000
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const scroller = useRef<HTMLDivElement>(null)
 
+  // fetch messages for this request_id
   useEffect(() => {
     if (!threadId) return
+    let alive = true
     ;(async () => {
       setLoading(true)
       try {
-        const r = await fetch(`${API}/api/threads/${threadId}`, { headers: { 'X-User-Id': user.id } })
+        const r = await fetch(`${baseUrl}/api/threads/${threadId}`, {
+          headers: { 'X-User-Id': user.id },
+        })
         const d = await r.json()
-        setMessages(d.messages || [])
+        if (alive) setMessages(d.messages || [])
       } catch {
         // ignore
       } finally {
         setLoading(false)
-        setTimeout(() => scroller.current?.scrollTo(0, 999999), 0)
+        setTimeout(() => scroller.current?.scrollTo(0, 9e9), 0)
       }
     })()
-  }, [threadId, user.id])
+    return () => { alive = false }
+  }, [threadId, user.id, baseUrl])
 
   async function send() {
     const body = input.trim()
     if (!body || !threadId) return
     setInput('')
-    // optimistically render
+
+    // optimistic bubble
     const optimistic: Msg = {
-      id: crypto.randomUUID(),
+      id: (crypto as any).randomUUID?.() ?? String(Math.random()),
       sender_id: user.id,
       body,
       kind: 'user',
       created_at: new Date().toISOString(),
     }
     setMessages(m => [...m, optimistic])
-    setTimeout(() => scroller.current?.scrollTo(0, 999999), 0)
+    setTimeout(() => scroller.current?.scrollTo(0, 9e9), 0)
 
-    await fetch(`${API}/api/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': user.id },
-      body: JSON.stringify({ threadId, body }),
-    }).catch(() => {})
+    try {
+      await fetch(`${baseUrl}/api/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': user.id },
+        body: JSON.stringify({ threadId, body }),
+      })
+      // re-pull to get canonical message (ids, server time, any system replies)
+      const r = await fetch(`${baseUrl}/api/threads/${threadId}`, {
+        headers: { 'X-User-Id': user.id },
+      })
+      const d = await r.json()
+      setMessages(d.messages || [])
+      setTimeout(() => scroller.current?.scrollTo(0, 9e9), 0)
+    } catch {
+      /* keep optimistic; avoid UI crash */
+    }
   }
 
   // light palette
@@ -71,12 +89,22 @@ export default function ChatRoom({
   const mineText = '#1E3A8A' // blue-900
   const otherBg = '#F3F4F6'  // gray-100
   const otherText = '#111827'
+  const sysText = '#6B7280'
 
   return (
     <div style={{ background:'#fff', color:'#111827', display:'flex', flexDirection:'column', height:'60vh' }}>
       <div ref={scroller} style={{ flex:1, overflowY:'auto', padding:'8px 4px' }}>
         {loading && <div style={{ color:'#6B7280' }}>Loading…</div>}
         {messages.map(m => {
+          if (m.kind === 'system') {
+            return (
+              <div key={m.id} style={{ display:'flex', justifyContent:'center', padding:'6px 0' }}>
+                <div style={{ fontSize:12, color: sysText, textAlign:'center', maxWidth:'85%' }}>
+                  {m.body}
+                </div>
+              </div>
+            )
+          }
           const mine = m.sender_id === user.id
           return (
             <div key={m.id} style={{ display:'flex', justifyContent: mine ? 'flex-end' : 'flex-start', padding:'4px 0' }}>

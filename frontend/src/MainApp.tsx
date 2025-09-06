@@ -1,7 +1,7 @@
 // src/MainApp.tsx
 import { useEffect, useState } from 'react'
 import { API } from './api'
-import Messages from './chat/MessagesTab'
+import Messages from './tabs/MessagesTab'
 import RequestsTab from './tabs/RequestsTab'
 import SearchTab from './tabs/SearchTab'
 import HistoryTab from './tabs/HistoryTab' 
