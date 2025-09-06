@@ -7,7 +7,7 @@ export const mockAcceptedRequests: AcceptedRequestInfo[] = [
     volunteer_id: "v1",   // Jason Tan (Volunteer)
     request_start_time: new Date("2025-03-05T10:00:00Z"),
     // not finished yet
-    request_status: "ongoing",
+    request_status: "Ongoing",
   },
   {
     request_id: "r2",
@@ -16,7 +16,7 @@ export const mockAcceptedRequests: AcceptedRequestInfo[] = [
     request_start_time: new Date("2025-03-06T14:00:00Z"),
     request_end_time: new Date("2025-03-06T16:10:00Z"),
     request_total_time: 130, // minutes
-    request_status: "closed",
+    request_status: "Closed",
   },
   {
     request_id: "r3",
@@ -25,7 +25,7 @@ export const mockAcceptedRequests: AcceptedRequestInfo[] = [
     request_start_time: new Date("2025-03-04T09:00:00Z"),
     request_end_time: new Date("2025-03-04T09:35:00Z"),
     request_total_time: 35, // minutes
-    request_status: "closed",
+    request_status: "Closed",
   },
   {
     request_id: "r4",
@@ -33,7 +33,7 @@ export const mockAcceptedRequests: AcceptedRequestInfo[] = [
     volunteer_id: "v3",   // Daniel Lee
     request_start_time: new Date("2025-03-07T08:30:00Z"),
     // ongoing, no end time yet
-    request_status: "ongoing",
+    request_status: "Ongoing",
   },
   {
     request_id: "r5",
@@ -42,6 +42,6 @@ export const mockAcceptedRequests: AcceptedRequestInfo[] = [
     request_start_time: new Date("2025-03-08T16:00:00Z"),
     request_end_time: new Date("2025-03-08T16:50:00Z"),
     request_total_time: 50, // minutes
-    request_status: "closed",
+    request_status: "Closed",
   },
 ];
