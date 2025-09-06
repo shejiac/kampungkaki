@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./requestform.css";
 import { v4 as uuidv4 } from 'uuid';
+const API = import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
 
 export default function RequestForm({ onSuccess, onCancel }) {
   const [step, setStep] = useState(1);
@@ -100,66 +101,32 @@ export default function RequestForm({ onSuccess, onCancel }) {
     e?.preventDefault?.();
     setMsg("");
 
-    // Granular validation so you see exactly what's missing
-    const missing = [];
-    if (!title || !title.trim()) missing.push("title");
-    if (!userId) missing.push("userId");
-    if (missing.length) {
-      setMsg(`Missing: ${missing.join(", ")}`);
-      return;
-    }
+    // minimal validation
+    if (!title?.trim()) return setMsg("Missing: title");
+    if (!userId) return setMsg("Missing: userId"); // keep if you want this check
 
     try {
       setSaving(true);
 
-      const requestId = uuidv4();
+      // parse duration once
+      const interval = toPgInterval(duration); // returns e.g. "03:00:00" or null
 
-      // Build payload using the snake_case keys your backend expects.
-      // Include optional fields ONLY when they are defined (avoid sending "").
-      const trimmedTitle = (title ?? "").trim();
-      const trimmedDescription = (description ?? "").trim();
-
+      // build the exact camelCase payload your backend maps
       const payload = {
-        // always include both names in case the server expects either
-        request_id: uuidv4(),
-        requester_id: userId,
-
-        // titles/descriptions: send BOTH snake_case and flat names, trimmed
-        request_title: trimmedTitle,
-        title: trimmedTitle,
-        request_description: trimmedDescription,
-        description: trimmedDescription,
-
-        request_status: status,
-        request_initial_meet: !!initialMeet,
+        title: (title || "").trim(),
+        description: (description || "").trim(),
+        status,                           // "OPEN"
+        type: label || null,              // COMPANIONSHIP / HOME_TASKS / etc.
+        priority: urgency || null,        // LOW / MEDIUM / HIGH
+        location: location || null,
+        initialMeet,                      // boolean
+        time: time || null,               // radio text OR ISO datetime
+        approxDuration: interval || null, // only if parsed
       };
 
-      // optional fields — only include if present
-      const request_type = orNull(label);
-      if (request_type) payload.request_type = request_type;
-
-      const request_priority = orNull(urgency);
-      if (request_priority) payload.request_priority = request_priority;
-
-      const request_location = orNull(location);
-      if (request_location) payload.request_location = request_location;
-
-      const isoTime = /^\d{4}-\d{2}-\d{2}T/.test(time) ? time : null;
-      if (isoTime) payload.request_time = isoTime;
-
-      const interval = toPgInterval(duration);
-      if (interval && String(interval).trim()) {
-        payload.request_approx_duration = interval; // e.g., "03:00:00" or "3 hours"
-      }
-
-      // debug what you actually send
       console.log("Submitting payload:", payload);
 
-
-      // Optional: quick debug
-      // console.log("DEBUG payload", payload);
-
-      const resp = await fetch("http://localhost:5000/api/requests", {
+      const resp = await fetch(`${API}/api/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -170,7 +137,7 @@ export default function RequestForm({ onSuccess, onCancel }) {
         throw new Error(err.error || "Failed to save");
       }
 
-      // reset after success
+      // reset
       setTitle("");
       setDescription("");
       setStatus("OPEN");
@@ -184,11 +151,12 @@ export default function RequestForm({ onSuccess, onCancel }) {
       setMsg("Request saved!");
       onSuccess?.();
     } catch (err) {
-      setMsg(err.message);
+      setMsg(err.message || String(err));
     } finally {
       setSaving(false);
     }
   }
+
 
   return (
     <form className="form-wrap" onSubmit={submit}>
